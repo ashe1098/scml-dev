@@ -29,7 +29,7 @@ end
 # unset irrelevant variables
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/mnt/c/Users/ShuHe/.scml"
+set -gx VIRTUAL_ENV "/mnt/c/ubuntu_home/workspace/scml/scml2020/myagent/.scml"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
