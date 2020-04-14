@@ -52,7 +52,7 @@ from scml.scml2020.world import Failure
 from tabulate import tabulate
 
 
-class MyAgent(SCML2020Agent):
+class Ashgent(SCML2020Agent):
     """
     This is the only class you *need* to implement. The current skeleton has a 
     basic do-nothing implementation.
@@ -193,7 +193,7 @@ def run(competition='std',
         - To speed it up, use a smaller `n_step` value        
 
     """
-    competitors = [MyAgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
+    competitors = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(

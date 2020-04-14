@@ -1,0 +1,4 @@
+仮想環境作った
+ash@SHU-6CGCGB3:~/workspace/scml/scml2020/myagent$  python -m venv .scml
+ash@SHU-6CGCGB3:~/workspace/scml/scml2020/myagent$ source .scml/bin/activate
+(.scml) ash@SHU-6CGCGB3:~/workspace/scml/scml2020/myagent$ deactivate
