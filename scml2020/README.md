@@ -22,7 +22,7 @@ To develop your agent, the only required steps are the following:
 1. [recommended] create a virtual environment
   - Install venv
 
-    > python3 -m venv .scml
+    > python -m venv .scml
   
   - Activate the virtual environment:
   
