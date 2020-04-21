@@ -57,12 +57,50 @@ from scml.scml2020 import PredictionBasedTradingStrategy
 from scml.scml2020 import MovingRangeNegotiationManager
 from scml.scml2020 import TradeDrivenProductionStrategy
 
-class MyComponentsBasedAgent(
-    TradeDrivenProductionStrategy,
-    MovingRangeNegotiationManager,
-    PredictionBasedTradingStrategy,
-    SCML2020Agent
+# original
+from scml.scml2020 import *
+
+class MyPredictor(FixedTradePredictionStrategy):  
+    """
+    ProductionStrategy
+    SupplyDrivenProductionStrategy
+    DemandDrivenProductionStrategy
+    TradeDrivenProductionStrategy
+    TradePredictionStrategy
+    FixedTradePredictionStrategy
+    ExecutionRatePredictionStrategy
+    """
+    # def trade_prediction_init(self):
+    #     inp = self.awi.my_input_product
+    #     self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+    #     self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+    pass
+
+class MyManager(MovingRangeNegotiationManager):
+    """
+    NegotiationManager
+    StepNegotiationManager
+    IndependentNegotiationsManager
+    MovingRangeNegotiationManager
+    """
+    pass
+
+class MyTrader(PredictionBasedTradingStrategy):  
+    """
+    TradingStrategy
+    ReactiveTradingStrategy
+    PredictionBasedTradingStrategy
+    """
+    pass
+
+
+class Ashgent(
+    # MyPredictor,
+    # MyManager,
+    # MyTrader,
+    IndependentNegotiationsAgent
 ):
+    pass
     """
     This is the only class you *need* to implement. You can create the agent
     by combining the following strategies:
@@ -73,6 +111,15 @@ class MyComponentsBasedAgent(
     3. A production strategy that decides what to produce
 
     """
+
+
+class MyComponentsBasedAgent(
+    TradeDrivenProductionStrategy,
+    MovingRangeNegotiationManager,
+    PredictionBasedTradingStrategy,
+    SCML2020Agent
+):
+    pass
 
 def run(competition='std',
          reveal_names=True,
@@ -103,7 +150,7 @@ def run(competition='std',
         - To speed it up, use a smaller `n_step` value        
 
     """
-    competitors = [MyComponentsBasedAgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
+    competitors = [Ashgent, MyComponentsBasedAgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(
