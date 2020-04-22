@@ -174,7 +174,7 @@ def analyze_unit_price(world, agent_type):
     return contracts.groupby(["selling", "buying"]).describe().round(1)
 
 def test():
-    agent_types = [Ashgent, LegacyAshgent, DecentralizingAgent, BuyCheapSellExpensiveAgent,
+    agent_types = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent,
                IndDecentralizingAgent, MovingRangeAgent]
     world = SCML2020World(
         **SCML2020World.generate(
@@ -209,6 +209,9 @@ def test():
     # print(analyze_unit_price(world, "DecentralizingAgent"))
 
     show_agent_scores(world)
+
+    world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
+    plt.show()
 
 
 def run(competition='std',
