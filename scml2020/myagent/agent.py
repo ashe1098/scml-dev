@@ -59,26 +59,37 @@ from scml.scml2020 import TradeDrivenProductionStrategy
 
 # original
 from scml.scml2020 import *
+from negmas import *
 import matplotlib.pyplot as plt
 from pprint import pprint
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
-class MyPredictor(TradeDrivenProductionStrategy):  
+class MyProductor(TradeDrivenProductionStrategy):  
     """
     ProductionStrategy
     SupplyDrivenProductionStrategy
     DemandDrivenProductionStrategy
     TradeDrivenProductionStrategy
-    TradePredictionStrategy
-    FixedTradePredictionStrategy
-    ExecutionRatePredictionStrategy
     """
-    # def trade_prediction_init(self):
-    #     inp = self.awi.my_input_product
-    #     self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
-    #     self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+    pass
+
+# class MyPredictor(TradePredictionStrategy):  
+#     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
+#     #PredictionBasedTradingStrategかReactiveAgentでしか使われてない
+#     """
+#     TradePredictionStrategy
+#     FixedTradePredictionStrategy
+#     ExecutionRatePredictionStrategy
+#     FixedERPStrategy
+#     MeanERPStrategy
+#     """
+#     # PredictionBasedTradingStrategyで使う．expectedからneededを決める．
+#     # (PredictionBasedTradingStrategyのsuper().init()で連鎖的に呼び出されてる
+#     def trade_prediction_init(self):
+#         self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+#         self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
 
 class MyNegotiationManager(StepNegotiationManager):
     """
@@ -87,34 +98,6 @@ class MyNegotiationManager(StepNegotiationManager):
     IndependentNegotiationsManager
     MovingRangeNegotiationManager
     """
-    pass
-
-class MyTrader(PredictionBasedTradingStrategy):  
-    """
-    TradingStrategy
-    ReactiveTradingStrategy
-    PredictionBasedTradingStrategy
-    """
-    pass
-
-
-class Ashgent(
-    MyPredictor,
-    MyNegotiationManager,
-    MyTrader,
-    SCML2020Agent
-):
-    """
-    This is the only class you *need* to implement. You can create the agent
-    by combining the following strategies:
-    
-    1. A trading strategy that decides the quantities to sell and buy
-    2. A negotiation manager that decides which negotiations to engage in and 
-       uses some controller(s) to control the behavior of all negotiators
-    3. A production strategy that decides what to produce
-
-    """
-
     def target_quantity(self, step: int, sell: bool) -> int:
         """A fixed target quantity of half my production capacity"""
         return self.awi.n_lines // 2
@@ -129,8 +112,35 @@ class Ashgent(
             return LinearUtilityFunction((0, 0.25, 1))
         return LinearUtilityFunction((0, -0.5, -0.8))
 
+class MyTrader(PredictionBasedTradingStrategy):  
+    """
+    TradingStrategy
+    ReactiveTradingStrategy
+    PredictionBasedTradingStrategy
+    """
+    pass
 
-### no need ##################
+
+class Ashgent(
+    MyProductor,
+    MyNegotiationManager,
+    MyTrader,
+    SCML2020Agent
+):
+    """
+    This is the only class you *need* to implement. You can create the agent
+    by combining the following strategies:
+    
+    1. A trading strategy that decides the quantities to sell and buy
+    2. A negotiation manager that decides which negotiations to engage in and 
+       uses some controller(s) to control the behavior of all negotiators
+    3. A production strategy that decides what to produce
+
+    """
+    pass
+
+
+########## for test ########################################
 class LegacyAshgent(
     TradeDrivenProductionStrategy,
     MovingRangeNegotiationManager,

@@ -152,3 +152,19 @@ stats = pd.DataFrame(data=world.stats)
 
 # from IPython.display import HTML
 # HTML('<img src="run.gif">')
+
+
+###
+from scml.scml2020.components import TradePredictionStrategy
+class MyPredictor(TradePredictionStrategy):
+    def trade_prediction_init(self):
+        self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+        self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+
+class MyDecentralizingAgent(MyPredictor, DecentralizingAgent):
+    pass
+
+def L(cls):  # クラスの継承関係どうなってんやろ
+    return [k.__name__ for k in cls.__mro__]
+print(L(MyDecentralizingAgent))
+print(L(DecentralizingAgent))
