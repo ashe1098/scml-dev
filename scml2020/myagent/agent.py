@@ -57,69 +57,18 @@ from scml.scml2020 import PredictionBasedTradingStrategy
 from scml.scml2020 import MovingRangeNegotiationManager
 from scml.scml2020 import TradeDrivenProductionStrategy
 
-# original
+# my need
 from scml.scml2020 import *
 from negmas import *
 import matplotlib.pyplot as plt
 from pprint import pprint
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
-class MyProductor(TradeDrivenProductionStrategy):  
-    """
-    ProductionStrategy
-    SupplyDrivenProductionStrategy
-    DemandDrivenProductionStrategy
-    TradeDrivenProductionStrategy
-    """
-    pass
-
-# class MyPredictor(TradePredictionStrategy):  
-#     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
-#     #PredictionBasedTradingStrategかReactiveAgentでしか使われてない
-#     """
-#     TradePredictionStrategy
-#     FixedTradePredictionStrategy
-#     ExecutionRatePredictionStrategy
-#     FixedERPStrategy
-#     MeanERPStrategy
-#     """
-#     # PredictionBasedTradingStrategyで使う．expectedからneededを決める．
-#     # (PredictionBasedTradingStrategyのsuper().init()で連鎖的に呼び出されてる
-#     def trade_prediction_init(self):
-#         self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
-#         self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
-
-class MyNegotiationManager(StepNegotiationManager):
-    """
-    NegotiationManager
-    StepNegotiationManager
-    IndependentNegotiationsManager
-    MovingRangeNegotiationManager
-    """
-    def target_quantity(self, step: int, sell: bool) -> int:
-        """A fixed target quantity of half my production capacity"""
-        return self.awi.n_lines // 2
-
-    def acceptable_unit_price(self, step: int, sell: bool) -> int:
-        """The catalog price seems OK"""
-        return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
-
-    def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
-        """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
-        if is_seller:
-            return LinearUtilityFunction((0, 0.25, 1))
-        return LinearUtilityFunction((0, -0.5, -0.8))
-
-class MyTrader(PredictionBasedTradingStrategy):  
-    """
-    TradingStrategy
-    ReactiveTradingStrategy
-    PredictionBasedTradingStrategy
-    """
-    pass
-
+# my module
+from components.production import MyProductor
+from components.negotiation import MyNegotiationManager
+from components.trading import MyTrader
 
 class Ashgent(
     MyProductor,
@@ -184,8 +133,7 @@ def analyze_unit_price(world, agent_type):
     return contracts.groupby(["selling", "buying"]).describe().round(1)
 
 def test():
-    agent_types = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent,
-               IndDecentralizingAgent, MovingRangeAgent]
+    agent_types = [Ashgent, DecentralizingAgent]
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
@@ -206,11 +154,12 @@ def test():
 
     # winner = world.winners[0]
 
-    stats = pd.DataFrame(data=world.stats)
-    bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
-        for a in world.non_system_agent_names}
-    pprint({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
+    # stats = pd.DataFrame(data=world.stats)
+    # bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
+    #     for a in world.non_system_agent_names}
+    # pprint({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
     
+
     # print("MyNewAgent:\n===========")
     # print(analyze_unit_price(world, "Ashgent"))
     # print("\nMyAgent:\n========")
@@ -220,8 +169,13 @@ def test():
 
     show_agent_scores(world)
 
-    world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
-    plt.show()
+    # world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
+    # plt.show()
+
+
+    # from pathlib import Path
+    # print(Path.home() /"negmas" / "logs" / world.name / "log.txt", "r") as f:
+    #     [print(_) for _ in f.readlines()[:10]]
 
 
 def run(competition='std',
