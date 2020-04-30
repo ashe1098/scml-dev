@@ -14,21 +14,28 @@ from pprint import pprint
 import pandas as pd
 import seaborn as sns
 
-# class MyPredictor(TradePredictionStrategy):  
+# class MyTradePredictor(TradePredictionStrategy):  
 #     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
-#     #PredictionBasedTradingStrategかReactiveAgentでしか使われてない
+#     #PredictionBasedTradingStrategyとReactiveAgentでしか使われてない
 #     """
 #     TradePredictionStrategy
 #     FixedTradePredictionStrategy
+#     """
+#     # PredictionBasedTradingStrategyで使う．expectedからneededを決める．
+#     def trade_prediction_init(self):
+#         self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+#         self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+
+# class MyERPredictor(MeanERPStrategy):  
+#     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
+#     # PredictionBasedTradingStrategyとStepNegotiationManagerでしか使われてない
+#     # PredictionBasedTradingStrategyで本当に使ってる？？？？？？？？？？
+#     """
 #     ExecutionRatePredictionStrategy
 #     FixedERPStrategy
 #     MeanERPStrategy
 #     """
-#     # PredictionBasedTradingStrategyで使う．expectedからneededを決める．
-#     # (PredictionBasedTradingStrategyのsuper().init()で連鎖的に呼び出されてる
-#     def trade_prediction_init(self):
-#         self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
-#         self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+#     pass
 
 class MyTrader(PredictionBasedTradingStrategy):  
     """
@@ -36,6 +43,13 @@ class MyTrader(PredictionBasedTradingStrategy):
     ReactiveTradingStrategy
     PredictionBasedTradingStrategy
     """
+    # def init(self):
+    #     super().init()
+    #     # If I expect to sell x outputs at step t, I should buy  x inputs at t-1
+    #     self.inputs_needed[:-1] = self.expected_outputs[1:]
+    #     # If I expect to buy x inputs at step t, I should sell x inputs at t+1
+    #     self.outputs_needed[1:] = self.expected_inputs[:-1]
+
     def on_contracts_finalized(
         self,
         signed: List[Contract],
