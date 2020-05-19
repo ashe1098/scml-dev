@@ -1,12 +1,17 @@
 # required for typing
-from typing import List, Optional, Dict, Any
 import numpy as np
-from negmas import (
-    Issue, AgentMechanismInterface, Contract, Negotiator,
-    MechanismState, Breach,
-)
+from pprint import pformat
+from typing import List, Optional
+
+from negmas import Contract
+
+from scml.scml2020.components import FixedTradePredictionStrategy, SignAllPossible
+from scml.scml2020.common import is_system_agent
+from scml.scml2020.common import ANY_LINE
+from scml.scml2020.components.prediction import MeanERPStrategy
 
 # my need
+from scml.scml2020.components.trading import *
 from scml.scml2020 import *
 from negmas import *
 import matplotlib.pyplot as plt
@@ -118,7 +123,7 @@ class MyTrader(PredictionBasedTradingStrategy):
 
     def sign_all_contracts(self, contracts: List[Contract]) -> List[Optional[str]]:
         # sort contracts by time and then put system contracts first within each time-step
-        print("sign_all_contracts")
+        # print("sign_all_contracts")
         signatures = [None] * len(contracts)
         contracts = sorted(
             zip(contracts, range(len(contracts))),
@@ -177,5 +182,5 @@ class MyTrader(PredictionBasedTradingStrategy):
                     sold += q
                 else:
                     bought += q
-        print("sign_all_contracts:end")
+        # print("sign_all_contracts:end")
         return signatures

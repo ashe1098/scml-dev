@@ -1,12 +1,32 @@
 # required for typing
-from typing import List, Optional, Dict, Any
+import functools
+import math
+from abc import abstractmethod
+from dataclasses import dataclass
+from pprint import pformat
+
+from typing import Tuple, List, Union, Any, Optional, Dict
+
 import numpy as np
+
 from negmas import (
-    Issue, AgentMechanismInterface, Contract, Negotiator,
-    MechanismState, Breach,
+    SAONegotiator,
+    AspirationNegotiator,
+    Issue,
+    AgentMechanismInterface,
+    Negotiator,
+    UtilityFunction,
+    Contract,
 )
+from negmas.helpers import get_class, instantiate
+
+from scml.scml2020 import AWI
+from scml.scml2020.components.prediction import MeanERPStrategy
+from scml.scml2020.services.controllers import StepController, SyncController
+from scml.scml2020.common import TIME
 
 # my need
+from scml.scml2020.components.negotiation import *
 from scml.scml2020 import *
 from negmas import *
 import matplotlib.pyplot as plt
@@ -24,17 +44,17 @@ import seaborn as sns
 #     """
 #     pass
 
-# @dataclass
-# class ControllerInfo:
-#     """Keeps a record of information about one of the controllers used by the agent"""
+@dataclass
+class ControllerInfo:
+    """Keeps a record of information about one of the controllers used by the agent"""
 
-#     controller: StepController
-#     time_step: int
-#     is_seller: bool
-#     time_range: Tuple[int, int]
-#     target: int
-#     expected: int
-#     done: bool = False
+    controller: StepController
+    time_step: int
+    is_seller: bool
+    time_range: Tuple[int, int]
+    target: int
+    expected: int
+    done: bool = False
 
 class MyNegotiationManager(StepNegotiationManager):
     """
@@ -246,11 +266,17 @@ class MyNegotiationManager(StepNegotiationManager):
 
     def target_quantity(self, step: int, sell: bool) -> int:
         """A fixed target quantity of half my production capacity"""
-        return self.awi.n_lines // 2
+        # return self.awi.n_lines // 2
+        return self.awi.n_lines
 
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         """The catalog price seems OK"""
-        return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
+        # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
+
+        op = self.awi.catalog_prices[self.awi.my_output_product]
+        inp = self.awi.catalog_prices[self.awi.my_input_product]
+        rate = op / inp
+        return op / rate if sell else inp
 
     # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
     #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""

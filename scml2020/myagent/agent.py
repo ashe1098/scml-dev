@@ -66,9 +66,9 @@ import pandas as pd
 import seaborn as sns
 
 # my module
-from components.production import MyProductor
-from components.negotiation import MyNegotiationManager
-from components.trading import MyTrader
+from .components.production import MyProductor  # 提出時は.components.productionにする
+from .components.negotiation import MyNegotiationManager
+from .components.trading import MyTrader
 
 class Ashgent(
     MyProductor,
@@ -226,4 +226,4 @@ def run(competition='std',
 
 
 if __name__ == '__main__':    
-    test()
+    run()
