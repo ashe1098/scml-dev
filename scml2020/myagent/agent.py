@@ -57,10 +57,24 @@ from scml.scml2020 import PredictionBasedTradingStrategy
 from scml.scml2020 import MovingRangeNegotiationManager
 from scml.scml2020 import TradeDrivenProductionStrategy
 
-class MyComponentsBasedAgent(
-    TradeDrivenProductionStrategy,
-    MovingRangeNegotiationManager,
-    PredictionBasedTradingStrategy,
+# my need
+from scml.scml2020 import *
+from negmas import *
+import matplotlib.pyplot as plt
+from pprint import pprint
+import pandas as pd
+import seaborn as sns
+
+# my module
+from components.production import MyProductor  # 提出時は.components.productionにする
+from components.negotiation import MyNegotiationManager
+from components.trading import MyTrader, MyTradePredictor
+
+class Ashgent(
+    MyTradePredictor,
+    MyProductor,
+    MyNegotiationManager,
+    MyTrader,
     SCML2020Agent
 ):
     """
@@ -73,6 +87,97 @@ class MyComponentsBasedAgent(
     3. A production strategy that decides what to produce
 
     """
+    pass
+
+
+########## for test ########################################
+class LegacyAshgent(
+    TradeDrivenProductionStrategy,
+    MovingRangeNegotiationManager,
+    PredictionBasedTradingStrategy,
+    SCML2020Agent
+):
+    pass
+
+
+from collections import defaultdict
+def show_agent_scores(world):
+    scores = defaultdict(list)
+    for aid, score in world.scores().items():
+        scores[world.agents[aid].__class__.__name__.split(".")[-1]].append(score)
+    scores = {k: sum(v)/len(v) for k, v in scores.items()}
+    plt.bar(list(scores.keys()), list(scores.values()), width=0.2)
+    plt.show()
+
+from scml.scml2020 import is_system_agent
+def analyze_unit_price(world, agent_type):
+    """Returns the average price relative to the negotiation issues"""
+    contracts = pd.DataFrame(world.saved_contracts)
+    fields = ["seller_type", "buyer_type", "unit_price", "issues", "selling", "buying"]
+    # Add fields indicating whether the agent_type is a seller or a buyer
+    contracts["selling"] = contracts.seller_type == agent_type
+    contracts["buying"] = contracts.buyer_type == agent_type
+    # keep only contracts in which agent_type is participating
+    contracts = contracts.loc[contracts.selling | contracts.buying, fields]
+    # remove all exogenous contracts
+    contracts = contracts.loc[contracts.issues.apply(len) > 0, fields]
+    # find the minimum and maximum unit price in the negotiation issues
+    min_vals = contracts.issues.apply(lambda x: x[UNIT_PRICE].min_value)
+    max_vals = contracts.issues.apply(lambda x: x[UNIT_PRICE].max_value)
+    # replace the unit price with its fraction of the unit-price issue range
+    contracts.unit_price = (contracts.unit_price- min_vals) / (max_vals-min_vals)
+    contracts = contracts.drop("issues", 1)
+    contracts = contracts.rename(columns=dict(unit_price="price"))
+    # group results by whether the agent is selling/buying/both
+    if len(contracts)<1:
+        return ""
+    return contracts.groupby(["selling", "buying"]).describe().round(1)
+
+def test():
+    agent_types = [Ashgent, DecentralizingAgent]
+    world = SCML2020World(
+        **SCML2020World.generate(
+            agent_types=agent_types,
+            n_steps=20
+        ),
+        construct_graphs=True,
+    )
+    world.run_with_progress()
+
+    # print(world.scores().loc[:, ["agent_name", "agent_type", "score"]].head())
+    # print(world.scores())
+
+    # world.scores["level"] = world.scores.agent_name.str.split("@", expand=True).loc[:, 1]
+    # sns.lineplot(data=world.scores[["agent_type", "level", "score"]],
+    #             x="level", y="score", hue="agent_type")
+    # plt.plot([0.0] * len(world.scores["level"].unique()), "b--")
+    # plt.show()
+
+    # winner = world.winners[0]
+
+    # stats = pd.DataFrame(data=world.stats)
+    # bankruptcy = {a: np.nonzero(stats[f"bankrupt_{a}"].values)[0]
+    #     for a in world.non_system_agent_names}
+    # pprint({k: "No" if len(v)<1 else f"at: {v[0]}" for k, v in bankruptcy.items()})
+    
+
+    # print("MyNewAgent:\n===========")
+    # print(analyze_unit_price(world, "Ashgent"))
+    # print("\nMyAgent:\n========")
+    # print(analyze_unit_price(world, "LegacyAshgent"))
+    # print("\nDecentralizingAgent:\n====================")
+    # print(analyze_unit_price(world, "DecentralizingAgent"))
+
+    show_agent_scores(world)
+
+    # world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
+    # plt.show()
+
+
+    # from pathlib import Path
+    # print(Path.home() /"negmas" / "logs" / world.name / "log.txt", "r") as f:
+    #     [print(_) for _ in f.readlines()[:10]]
+
 
 def run(competition='std',
          reveal_names=True,
@@ -103,7 +208,7 @@ def run(competition='std',
         - To speed it up, use a smaller `n_step` value        
 
     """
-    competitors = [MyComponentsBasedAgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
+    competitors = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(
