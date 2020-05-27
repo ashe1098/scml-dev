@@ -55,33 +55,33 @@ class ControllerInfo:
     expected: int
     done: bool = False
 
-class MyNegotiationManager(StepNegotiationManager):
+class MyNegotiationManager(MeanERPStrategy, NegotiationManager):
     """
     NegotiationManager
-    StepNegotiationManager
+    *StepNegotiationManager
     IndependentNegotiationsManager
     MovingRangeNegotiationManager
     """
-    # def __init__(
-    #     self,
-    #     *args,
-    #     negotiator_type: Union[SAONegotiator, str] = AspirationNegotiator,
-    #     negotiator_params: Optional[Dict[str, Any]] = None,
-    #     **kwargs,
-    # ):
-    #     super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        *args,
+        negotiator_type: Union[SAONegotiator, str] = AspirationNegotiator,
+        negotiator_params: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
 
-    #     # save construction parameters
-    #     self.negotiator_type = get_class(negotiator_type)
-    #     self.negotiator_params = (
-    #         negotiator_params if negotiator_params is not None else dict()
-    #     )
+        # save construction parameters
+        self.negotiator_type = get_class(negotiator_type)
+        self.negotiator_params = (
+            negotiator_params if negotiator_params is not None else dict()
+        )
 
-    #     # attributes that will be read during init() from the AWI
-    #     # -------------------------------------------------------
-    #     self.buyers = self.sellers = None
-    #     """Buyer controllers and seller controllers. Each of them is responsible of covering the
-    #     needs for one step (either buying or selling)."""
+        # attributes that will be read during init() from the AWI
+        # -------------------------------------------------------
+        self.buyers = self.sellers = None
+        """Buyer controllers and seller controllers. Each of them is responsible of covering the
+        needs for one step (either buying or selling)."""
 
     def init(self):
         super().init()
@@ -261,24 +261,3 @@ class MyNegotiationManager(StepNegotiationManager):
     def _get_controller(self, mechanism) -> StepController:
         neg = self._running_negotiations[mechanism.id]
         return neg.negotiator.parent
-
-
-    def target_quantity(self, step: int, sell: bool) -> int:
-        # """A fixed target quantity of half my production capacity"""
-        # return self.awi.n_lines // 2
-        return self.awi.n_lines
-
-    def acceptable_unit_price(self, step: int, sell: bool) -> int:
-        # """The catalog price seems OK"""
-        # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
-
-        op = self.awi.catalog_prices[self.awi.my_output_product]
-        inp = self.awi.catalog_prices[self.awi.my_input_product]
-        rate = op / inp
-        return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
-
-    # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
-    #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
-    #     if is_seller:
-    #         return LinearUtilityFunction((0, 0.25, 1))
-    #     return LinearUtilityFunction((0, -0.5, -0.8))

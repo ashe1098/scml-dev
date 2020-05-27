@@ -68,10 +68,10 @@ import seaborn as sns
 # my module
 from components.production import MyProductor  # 提出時は.components.productionにする
 from components.negotiation import MyNegotiationManager
-from components.trading import MyTrader, MyTradePredictor
+from components.trading import MyTrader
 
+# *DecentralizingAgent
 class Ashgent(
-    MyTradePredictor,
     MyProductor,
     MyNegotiationManager,
     MyTrader,
@@ -87,7 +87,27 @@ class Ashgent(
     3. A production strategy that decides what to produce
 
     """
-    pass
+
+    def target_quantity(self, step: int, sell: bool) -> int:
+        # """A fixed target quantity of half my production capacity"""
+        # return self.awi.n_lines // 2
+        return self.awi.n_lines
+
+    def acceptable_unit_price(self, step: int, sell: bool) -> int:
+        # """The catalog price seems OK"""
+        # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
+
+        op = self.awi.catalog_prices[self.awi.my_output_product]
+        inp = self.awi.catalog_prices[self.awi.my_input_product]
+        rate = op / inp
+        return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
+
+    # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
+    #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
+    #     if is_seller:
+    #         return LinearUtilityFunction((0, 0.25, 1))
+    #     return LinearUtilityFunction((0, -0.5, -0.8))
+
 
 
 ########## for test ########################################
