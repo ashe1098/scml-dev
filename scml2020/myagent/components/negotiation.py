@@ -47,7 +47,6 @@ import seaborn as sns
 @dataclass
 class ControllerInfo:
     """Keeps a record of information about one of the controllers used by the agent"""
-
     controller: StepController
     time_step: int
     is_seller: bool
@@ -265,18 +264,18 @@ class MyNegotiationManager(StepNegotiationManager):
 
 
     def target_quantity(self, step: int, sell: bool) -> int:
-        """A fixed target quantity of half my production capacity"""
+        # """A fixed target quantity of half my production capacity"""
         # return self.awi.n_lines // 2
         return self.awi.n_lines
 
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
-        """The catalog price seems OK"""
+        # """The catalog price seems OK"""
         # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
 
         op = self.awi.catalog_prices[self.awi.my_output_product]
         inp = self.awi.catalog_prices[self.awi.my_input_product]
         rate = op / inp
-        return op / rate if sell else inp
+        return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
 
     # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
     #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""

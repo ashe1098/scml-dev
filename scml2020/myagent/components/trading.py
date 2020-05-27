@@ -19,7 +19,12 @@ from pprint import pprint
 import pandas as pd
 import seaborn as sns
 
-# class MyTradePredictor(TradePredictionStrategy):  
+#for prediction
+from abc import abstractmethod
+from typing import Union, Iterable, List, Optional
+import numpy as np
+
+class MyTradePredictor(FixedTradePredictionStrategy):  
 #     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
 #     #PredictionBasedTradingStrategyとReactiveAgentでしか使われてない
 #     """
@@ -30,6 +35,60 @@ import seaborn as sns
 #     def trade_prediction_init(self):
 #         self.expected_outputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
 #         self.expected_inputs = self.awi.n_lines * np.ones(self.awi.n_steps, dtype=int)
+    # def trade_prediction_init(self):
+    #     inp = self.awi.my_input_product
+
+    #     def adjust(x, demand):
+    #         """Adjust the predicted demand/supply filling it with a default value or repeating as needed"""
+    #         if x is None:
+    #             x = max(1, self.awi.n_lines // 2)
+    #         elif isinstance(x, Iterable):
+    #             return np.array(x)
+    #         predicted = int(x) * np.ones(self.awi.n_steps, dtype=int)
+    #         if demand:
+    #             predicted[: inp + 1] = 0
+    #         else:
+    #             predicted[inp - self.awi.n_processes :] = 0
+    #         return predicted
+
+    #     # adjust predicted demand and supply
+    #     self.expected_outputs = adjust(self.expected_outputs, True)
+    #     self.expected_inputs = adjust(self.expected_inputs, False)
+
+
+    # def trade_prediction_step(self):
+    #     pass
+
+    # @property
+    # def internal_state(self):
+    #     state = super().internal_state
+    #     state.update(
+    #         {
+    #             "expected_inputs": self.expected_inputs,
+    #             "expected_outputs": self.expected_outputs,
+    #             "input_cost": self.input_cost,
+    #             "output_price": self.output_price,
+    #         }
+    #     )
+    #     return state
+
+    # def on_contracts_finalized(
+    #     self,
+    #     signed: List[Contract],
+    #     cancelled: List[Contract],
+    #     rejectors: List[List[str]],
+    # ) -> None:
+    #     super().on_contracts_finalized(signed, cancelled, rejectors)
+    #     if not self._add_trade:
+    #         return
+    #     for contract in signed:
+    #         t, q = contract.agreement["time"], contract.agreement["quantity"]
+    #         if contract.annotation["seller"] == self.id:
+    #             self.expected_outputs[t] += q
+    #         else:
+    #             self.expected_inputs[t] += q
+    pass
+
 
 # class MyERPredictor(MeanERPStrategy):  
 #     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
@@ -40,7 +99,7 @@ import seaborn as sns
 #     FixedERPStrategy
 #     MeanERPStrategy
 #     """
-#     pass
+
 
 class MyTrader(PredictionBasedTradingStrategy):  
     """
@@ -86,17 +145,18 @@ class MyTrader(PredictionBasedTradingStrategy):
                 self.outputs_secured[t] += q
                 if input_product >= 0 and t > 0:
                     # find the maximum possible production I can do and saturate to it
-                    # steps, lines = self.awi.available_for_production(
-                    #     repeats=q, step=(self.awi.current_step, t - 1), method="latest"  # method="latest"バグってる．repeats=q-1になるのと，q=1のときallの挙動をする
-                    # )
                     steps, lines = self.awi.available_for_production(
-                        repeats=q, step=(self.awi.current_step, t - 1), method="all"
+                        repeats=q, step=(self.awi.current_step, t - 1), method="earliest"  # method="latest"バグってる．repeats=q-1になるのと，q=1のときallの挙動をする
                     )
-                    possible = min(q, len(steps))
-                    if possible < q:
-                        steps, lines = np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
-                    else:
-                        steps, lines = steps[-possible:], lines[-possible:]  # 上記のバグに対応
+                    # steps, lines = self.awi.available_for_production(
+                    #     repeats=q, step=(self.awi.current_step, t - 1), method="all"
+                    # )
+                    # possible = min(q, len(steps))
+                    # if possible < q:
+                    #     steps, lines = np.empty(shape=0, dtype=int), np.empty(shape=0, dtype=int)
+                    # else:
+                    #     steps, lines = steps[-possible:], lines[-possible:]  # 上記のバグに対応
+
                     # print(q)
                     # print(steps)
                     # print(lines)
