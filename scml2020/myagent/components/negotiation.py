@@ -46,7 +46,7 @@ class ControllerInfo:
     expected: int
     done: bool = False
 
-class MyNegotiationManager(MeanERPStrategy, NegotiationManager):
+class MyNegotiationManager(MyERPredictor, NegotiationManager):
     """
     NegotiationManager
     *StepNegotiationManager
@@ -119,7 +119,7 @@ class MyNegotiationManager(MeanERPStrategy, NegotiationManager):
             quantity=qvalues,
             unit_price=uvalues,
             time=tvalues,
-            partners=partners,
+            partners=partners,  # これのリストを部分的に渡せば，交渉相手を制限できそう？
             controller=controller,
             extra=dict(controller_index=step, is_seller=sell),
         )

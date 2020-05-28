@@ -57,6 +57,9 @@ from scml.scml2020 import PredictionBasedTradingStrategy
 from scml.scml2020 import MovingRangeNegotiationManager
 from scml.scml2020 import TradeDrivenProductionStrategy
 
+from typing import Tuple
+from negmas import LinearUtilityFunction
+
 # my need
 from scml.scml2020 import *
 from negmas import *
@@ -66,9 +69,9 @@ import pandas as pd
 import seaborn as sns
 
 # my module
-from components.production import MyProductor  # 提出時は.components.productionにする
-from components.negotiation import MyNegotiationManager
-from components.trading import MyTrader
+from .components.production import MyProductor  # 提出時は.components.productionにする
+from .components.negotiation import MyNegotiationManager
+from .components.trading import MyTrader
 
 # *DecentralizingAgent
 class Ashgent(
@@ -98,16 +101,43 @@ class Ashgent(
     def target_quantity(self, step: int, sell: bool) -> int:
         # """A fixed target quantity of half my production capacity"""
         # return self.awi.n_lines // 2
+
+        ## 改良 ##
         return self.awi.n_lines
+
+        # ## 元 ##
+        # if sell:
+        #     needed, secured = self.outputs_needed, self.outputs_secured
+        # else:
+        #     needed, secured = self.inputs_needed, self.inputs_secured
+
+        # return needed[step - 1] - secured[step - 1]  # stepが1から始まるから-1する必要あり．元のやつバグってるわ
+
+    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:  # これがあればtarget_quantityは使わないっぽい
+        """Implemented for speed but not really required"""
+
+        if sell:
+            needed, secured = self.outputs_needed, self.outputs_secured
+        else:
+            needed, secured = self.inputs_needed, self.inputs_secured
+
+        return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
 
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
         # """The catalog price seems OK"""
         # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
 
-        op = self.awi.catalog_prices[self.awi.my_output_product]
-        inp = self.awi.catalog_prices[self.awi.my_input_product]
-        rate = op / inp
-        return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
+        # ## 改良 ## 
+        # op = self.awi.catalog_prices[self.awi.my_output_product]
+        # inp = self.awi.catalog_prices[self.awi.my_input_product]
+        # rate = op / inp
+        # return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
+        
+        ## 元 ##
+        production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
+        if sell:
+            return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
+        return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
 
     # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
     #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
@@ -165,7 +195,7 @@ def test():
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
-            n_steps=20
+            n_steps=50
         ),
         construct_graphs=True,
     )
@@ -254,4 +284,4 @@ def run(competition='std',
 
 
 if __name__ == '__main__':    
-    run()
+    test()

@@ -46,6 +46,7 @@ class MyTradePredictor(TradePredictionStrategy):
 
 
     def trade_prediction_step(self):
+        # print(self.expected_outputs)
         pass
 
     @property
@@ -70,12 +71,28 @@ class MyTradePredictor(TradePredictionStrategy):
         super().on_contracts_finalized(signed, cancelled, rejectors)
         if not self._add_trade:
             return
+
+        def check_breach(contract, is_seller):
+            k_pre = 0
+            latest_breach_level = 0.0
+            if is_seller:
+                d = self.awi.reports_of_agent(contract.annotation["buyer"])
+            else:
+                d = self.awi.reports_of_agent(contract.annotation["seller"])
+            if d is not None:
+                for k, v in d.items():
+                    if(k > k_pre):
+                        latest_breach_level = v.breach_level
+            return latest_breach_level
+
         for contract in signed:
             t, q = contract.agreement["time"], contract.agreement["quantity"]
+
+             # breach_levelを参照して予測値を調整，ステップ数が増えると効いてくる（多分）
             if contract.annotation["seller"] == self.id:
-                self.expected_outputs[t] += q
+                self.expected_outputs[t] += q * (1 - pow(check_breach(contract, True), 1)) # 何乗かするより1乗のままが一番性能良かった
             else:
-                self.expected_inputs[t] += q
+                self.expected_inputs[t] += q * (1 - pow(check_breach(contract, False), 1))
 
 
 class MyERPredictor(ExecutionRatePredictionStrategy):  
@@ -86,12 +103,12 @@ class MyERPredictor(ExecutionRatePredictionStrategy):
     FixedERPStrategy
     *MeanERPStrategy
     """
-    def __init__(self, *args, execution_fraction=0.5, **kwargs):
+    def __init__(self, *args, execution_fraction=0.0, **kwargs):  # 0.5->0.0にしたらグッとよくなった
         super().__init__(*args, **kwargs)
         self._execution_fraction = execution_fraction
         self._total_quantity = None
 
-    def predict_quantity(self, contract: Contract):
+    def predict_quantity(self, contract: Contract):  # 一回も呼び出されなくね？
         return contract.agreement["quantity"] * self._execution_fraction
 
     def init(self):
@@ -112,6 +129,7 @@ class MyERPredictor(ExecutionRatePredictionStrategy):
         self._execution_fraction = (
             self._execution_fraction * old_total + q
         ) / self._total_quantity
+        # print(self._execution_fraction)
 
     def on_contract_breached(
         self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
