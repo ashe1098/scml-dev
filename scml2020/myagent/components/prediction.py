@@ -103,7 +103,7 @@ class MyERPredictor(ExecutionRatePredictionStrategy):
     FixedERPStrategy
     *MeanERPStrategy
     """
-    def __init__(self, *args, execution_fraction=0.0, **kwargs):  # 0.5->0.0にしたらグッとよくなった
+    def __init__(self, *args, execution_fraction=0.8, **kwargs):  # execution_fractionの初期値何がいい？
         super().__init__(*args, **kwargs)
         self._execution_fraction = execution_fraction
         self._total_quantity = None
@@ -129,7 +129,7 @@ class MyERPredictor(ExecutionRatePredictionStrategy):
         self._execution_fraction = (
             self._execution_fraction * old_total + q
         ) / self._total_quantity
-        # print(self._execution_fraction)
+        print(self._execution_fraction)
 
     def on_contract_breached(
         self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
