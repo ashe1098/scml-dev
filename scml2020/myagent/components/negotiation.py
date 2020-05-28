@@ -33,16 +33,7 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 import pandas as pd
 import seaborn as sns
-
-# class MyERPredictor(MeanERPStrategy):  
-#     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
-#     # PredictionBasedTradingStrategyとStepNegotiationManagerでしか使われてない
-#     """
-#     ExecutionRatePredictionStrategy
-#     FixedERPStrategy
-#     MeanERPStrategy
-#     """
-#     pass
+from .prediction import MyERPredictor
 
 @dataclass
 class ControllerInfo:

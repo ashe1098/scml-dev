@@ -88,6 +88,13 @@ class Ashgent(
 
     """
 
+    def step(self):
+        super().step()
+        # print(self.awi.reports_of_agent(self.id))  # エージェントのIDからFinancialReportを取得
+        # if self.awi.current_step > 10:  # 0はダメ
+        #     print(self.awi.reports_at_step(self.awi.current_step - 1))  # ステップ番号からFinancialReportを取得, 指定できるステップ以前に発行された最新のFinancialReportが取得できると思われる, current_step以前のステップを指定
+        #     # print(self.awi.reports_at_step(4))  # Noneが返ってくる謎(古いステップのFinantialReportは5ステップずつしか残ってない？)
+
     def target_quantity(self, step: int, sell: bool) -> int:
         # """A fixed target quantity of half my production capacity"""
         # return self.awi.n_lines // 2
