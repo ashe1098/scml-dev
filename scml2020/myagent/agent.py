@@ -69,9 +69,9 @@ import pandas as pd
 import seaborn as sns
 
 # my module
-from .components.production import MyProductor  # 提出時は.components.productionにする
-from .components.negotiation import MyNegotiationManager
-from .components.trading import MyTrader
+from components.production import MyProductor  # 提出時は.components.productionにする
+from components.negotiation import MyNegotiationManager
+from components.trading import MyTrader
 
 # *DecentralizingAgent
 class Ashgent(
@@ -238,7 +238,7 @@ def test():
 
 def run(competition='std',
          reveal_names=True,
-         n_steps=20,
+         n_steps=50,
          n_configs=2,
          max_n_worlds_per_config=None,
          n_runs_per_world=1
@@ -284,4 +284,4 @@ def run(competition='std',
 
 
 if __name__ == '__main__':    
-    test()
+    run()

@@ -20,7 +20,7 @@ import pandas as pd
 import seaborn as sns
 from .prediction import MyTradePredictor, MyERPredictor
 
-class MyTrader(MyTradePredictor, MyERPredictor, TradingStrategy):  
+class MyTrader(MyTradePredictor, MyERPredictor, TradingStrategy):  # MyERPredictorいる？？？
     """
     TradingStrategy
     ReactiveTradingStrategy
@@ -29,7 +29,7 @@ class MyTrader(MyTradePredictor, MyERPredictor, TradingStrategy):
     def init(self):
         super().init()
         # If I expect to sell x outputs at step t, I should buy  x inputs at t-1
-        self.inputs_needed[:-1] = self.expected_outputs[1:]
+        self.inputs_needed[:-1] = self.expected_outputs[1:]  # 参照渡し！！ # 予測値を必要個数としている->neededを最適化で求めたいよね
         # If I expect to buy x inputs at step t, I should sell x inputs at t+1
         self.outputs_needed[1:] = self.expected_inputs[:-1]
 

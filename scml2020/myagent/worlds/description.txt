@@ -1,0 +1,187 @@
+This dataset contains partial logs from the SCML online competition being conducted at
+https://scml.cs.brown.edu
+
+The logs were extracted using 15% of the world simulations conducted so far randomly
+selected from different tournaments. Both standard and collusion tournaments are present
+in the dataset.
+
+The data represent over 20M contracts that resulted from interactions between >15K agents of
+>40 different types in 9957 world simulations spanning >100K simulation steps (days).
+
+The following measures were taken to anonymize the data:
+1. Agent class information (agent type) is anonymized by replacing class names with T**
+   strings (where ** are numbers ranging from 0 to 99) in random order of class names.
+2. Tournament information was removed so it is not possible to directly link any simulation
+   with a specific tournament run.
+3. Internal details of agents like detailed inventory logs were removed and financial reports
+   were logged at the same intervals as in the real game (every 5 steps).
+
+To generate similar logs, you can just use scml.scml2020.utils.anac2020_std/anac2020_collusion
+helper functions to generate tournaments with default parameters. The logs will then be found
+under ~/negmas/tournaments or ~/negmas/logs.
+
+Example:
+
+>> from scml.scml2020.utils import anac2020_std
+>> anac2020_std(competitors=[...])
+>> # replace `...` with the competitor types
+
+Not present in this data are records of failed negotiations (negotiations that led to no
+agreements). You can get such records in your own simulations by passing `save_negotiations=True`
+to your SCML2020World constructor, SCML2020World.generate method or anac2020_std/anac2020_collusion
+helpers.
+
+Example:
+
+>> from scml.scml2020.utils import anac2020_std
+>> anac2020_std(competitors=[...], save_negotiations=True)
+>> # replace `...` with the competitor types
+
+Logs from each world are stored in a separate directory.  Each such directory contains 6 files.
+The following sections explain the contents of these files in details
+
+In summary the following files will be found in each folder:
+
+|---------------|---------------------------------------------------|------------------|
+| File          | Description                                       | Total N. Records |
+|---------------|---------------------------------------------------|------------------|
+| contracts.csv | One record for each contract                      | > 4M             |
+| agents.csv    | Agent information including type                  | > 15K            |
+| params.json   | Parameters of the world                           | 9960             |
+| stats.csv     | Statistics of the world simulation per step (day) | > 100K           |
+| reports.csv   | Financial reports                                 | > 250K           |
+| breaches.json | Breach probability for each agent                 | > 15K            |
+|---------------|---------------------------------------------------|------------------|
+
+Please note that the way you use this data is completely up to you (including not bothering to use it
+at all) and it is NOT expected that the behavior of agents in the final competition will follow
+similar patterns (partially because of the availability of this dataset and partially because
+none of the agents are in their final form yet).
+
+Contracts:
+==========
+Stored in contracts.csv
+
+|---------------|-------------------------------------------------|
+| index         | Unique index                                    |
+| seller_type   | Seller agent class (type)*                      |
+| buyer_type    | Buyer agent class (type)*                       |
+| seller        | Seller agent ID/name                            |
+| buyer         | Buyer agent ID/name                             |
+| n_neg_steps   | N. negotiation steps that led to this agreement |
+| product       | Product number (0 for raw material)             |
+| delivery_time | Delivery time (step = day)                      |
+| quantity      | Quantity agreed upon                            |
+| unit_price    | Unit price agreed upon                          |
+| concluded_at  | Step (day) at which the contract was concluded  |
+| signed_at     | Step (day) at which the contract was signed     |
+| executed_at   | Step (day) at which the contract was executed   |
+| dropped_at    | Step (day) at which the contract was dropped    |
+| nullified_at  | Step (day) at which the contract was nullified  |
+| erred_at      | Step (day) at which the contract was erred      |
+|---------------|-------------------------------------------------|
+* Seller/Buyer type is OTHER for system agents (BUYER and SELLER agents)
+** Fields ending with "_at" will have the value -1 if not applicable
+
+Agents:
+=======
+Stored in agents.csv
+
+|-------|--------------------------------------------------------|
+|       | unique index                                           |
+| id    | Agent ID                                               |
+| level | The production level (= the process the agent can run) |
+| name  | Agent name (same as ID_)                               |
+| type  | Anonymized agent type (stable for the whole dataset)   |
+|-------|--------------------------------------------------------|
+
+World Parameters:
+=================
+Stored in params.json
+
+|--------------------------|--------------------------------------------------------------|
+| time_limit               | The total allowed time for the simulation                    |
+| spot_discount            | The discount applied when calculating spot prices            |
+| spot_market_global_loss  | The market global loss (See game description)                |
+| neg_quota_step           | Number of negotiations an agent is allowed to start per step |
+| n_processes              | N. Processes in the world (= N. products -1)                 |
+| n_products               | N. Products in the world (= N. processes + 1)                |
+| n_steps                  | N. Simulation steps (days)                                   |
+| financial_reports_period | N. of days between financial report publications             |
+| exogenous_horizon        | N. of steps in advance of delivery date at which             |
+|                          | exogenous contracts are revealed                             |
+| max_productivity         | Max. Productivity expected in the world (estimate)           |
+| catalog_prices           | Catalog prices (A value per product)                         |
+| ash_availability         | Cash availability (See world generation appendix)            |
+| expected_productivity    | Expected productivity in the market (estimate)               |
+| expected_mean_profit     | An estimate of the profitability of this market              |
+| initial_balance          | Initial balance (one value per process)                      |
+|--------------------------|--------------------------------------------------------------|
+
+World Statistics:
+=================
+Stored in stats.csv
+
+|----------------------------------|-----------------------------------------------------------------------|
+| index                            | Simulation step (day)                                                 |
+| n_registered_negotiations_before | N. Requested Negotiations at the beginning of the day                 |
+| n_registered_negotiations_after  | N. Registered negotiations at the end of the day                      |
+| n_negotiations                   | N. Negotiations executed                                              |
+| n_negotiation_successful         | N. Negotiations that led to agreements                                |
+| n_negotiation_failed             | N. Negotiations that led to disagreement                              |
+| n_negotiation_rounds_successful  | Average number of negotiation rounds for negotiations                 |
+|                                  | that led to agreements                                                |
+| n_negotiation_rounds_failed      | Average number of negotiation rounds for negotiations                 |
+|                                  | that led to disagreement                                              |
+| n_contracts_concluded            | N. Contracts concluded                                                |
+| n_contracts_cancelled            | N. Cancelled contracts (contracts that were concluded but not signed) |
+| n_contracts_signed               | N. Contracts signed                                                   |
+| n_contracts_executed             | N. Executed Contracts                                                 |
+| n_contracts_erred                | N. Contracts that did not execute successfully (should be zero)       |
+| n_contracts_nullified_now        | N. of contracts nullified (See bankruptcy processing)                 |
+| n_contracts_nullified            | Total number of nullified contracts                                   |
+| n_contracts_dropped              | N. of contracts dropped due to the delivery date                      |
+|                                  | being in the past (or zero quantity)                                  |
+| n_breaches                       | N. Breaches                                                           |
+| n_bankrupt                       | N. of bankrupt agents                                                 |
+| productivity                     | Fraction of occupied lines                                            |
+| market_size                      | Total cash in the market                                              |
+| production_failures              | N. of production failures                                             |
+| breach_level                     | Average breach level                                                  |
+| activity_level                   | Total value of transferred goods during this step                     |
+| step_time                        | Execution time of this step                                           |
+| total_time                       | Total execution time until this step                                  |
+| trading_price_i                  | Trading price for product i                                           |
+|                                  | (See calculation method at http://www.yasserm.com/scml/scml.pdf)      |
+| sold_quantity_i                  | Sold/bought quantity of product i                                     |
+| unit_price_i                     | Average unit price of product i                                       |
+|----------------------------------|-----------------------------------------------------------------------|
+
+Financial Reports:
+==================
+Stored in reports.csv
+
+|----------|--------------------------------------------|
+|          | unique index                               |
+| agent_id | The ID (Name) of the agent                 |
+| step     | The simulation step (day)                  |
+| balance  | The balance of the agent at the given step |
+| assets   | The assets of the agent at the given step  |
+| bankrupt | Whether the agent went bankrupt            |
+|----------|--------------------------------------------|
+
+Breach Probabilities:
+=====================
+Stored in breaches.json
+
+Maps agent ID to its breach probability
+
+
+Adjustment script:
+=================
+
+Other than this description.txt file, you will find a script called `adjust.py` which adjusts the log folder
+of any SCML2020 world simulation to match the format of this dataset in-place. For usage details, please check
+the documentation on the top of `adjust.py`.
+
+

@@ -98,6 +98,7 @@ class MyTradePredictor(TradePredictionStrategy):
 class MyERPredictor(ExecutionRatePredictionStrategy):  
     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
     # PredictionBasedTradingStrategyとStepNegotiationManagerでしか使われてない
+    # PredictionBasedTradingStrategyはon_contract_executedとon_contract_breachedだけ使ってる？でもTradingStrategyには必要ないよな．．．？
     """
     ExecutionRatePredictionStrategy
     FixedERPStrategy
@@ -108,7 +109,7 @@ class MyERPredictor(ExecutionRatePredictionStrategy):
         self._execution_fraction = execution_fraction
         self._total_quantity = None
 
-    def predict_quantity(self, contract: Contract):  # 一回も呼び出されなくね？
+    def predict_quantity(self, contract: Contract):  # 不要．本来は_start_negotiationsのexpected_quantityを求めるのに使われるはずだった？
         return contract.agreement["quantity"] * self._execution_fraction
 
     def init(self):
@@ -129,7 +130,7 @@ class MyERPredictor(ExecutionRatePredictionStrategy):
         self._execution_fraction = (
             self._execution_fraction * old_total + q
         ) / self._total_quantity
-        print(self._execution_fraction)
+        # print(self._execution_fraction)
 
     def on_contract_breached(
         self, contract: Contract, breaches: List[Breach], resolution: Optional[Contract]
