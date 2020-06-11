@@ -14,13 +14,29 @@ path_dir = Path(__file__).parent / "../worlds"  # 提出時はどういうパス
 # print(list(Path(path_dir).glob("**/stats.csv")))
 
 stats = None
+counter = 0
 for path in get_stats(path_dir):
-    print(path)
-    target = np.genfromtxt(path, delimiter=",", skip_header=1)
-    print(np.shape(target))
-    print(target)
+    counter += 1
+    if counter > 3000:
+        break
+
+    stats_step = np.full((200, 44), np.nan)  # 最大ステップ数200に合わせる, 製品番号数によっては44で足りなくなる（データ更新したらエラー起こりうるから注意）
+    # print(stats_step.shape)
+    # print(stats_step)
+
+    print("LOADING", counter, path)
+    read = np.genfromtxt(path, delimiter=",", skip_header=1)  # numpyによるCSVからの行列生成
+    # print(read.shape)
+    # print(read)
+
+    stats_step[:read.shape[0], :5] = read[:, :5]  # n_bankruptより前のデータ
+    stats_step[:read.shape[0], 5:read.shape[1] - 21] = read[:, 5:-21]  # ステップごとに可変長のデータ（trading_price_0など）
+    stats_step[:read.shape[0], -21:] = read[:, -21:]  # productivityより後ろのデータ
+    # print(stats_step)
+
     if stats is None:
-        stats = target
+        stats = stats_step
     else:
-        stats = np.block([[[stats]], [[target]]])  # ステップ数が変わるから次元が合わせられない．どうする？nanで埋めるか
+        stats = np.block([[[stats]], [[stats_step]]])
+
 print(stats)
