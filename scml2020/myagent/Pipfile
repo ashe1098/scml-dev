@@ -7,9 +7,9 @@ verify_ssl = true
 pylint = "*"
 
 [packages]
-scml = "*"
 pip = "==20.0.2"
 xz = "*"
+scml = "==0.3.0"
 
 [requires]
 python_version = "3.8"

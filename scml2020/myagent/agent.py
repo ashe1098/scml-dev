@@ -265,7 +265,7 @@ def run(competition='std',
         - To speed it up, use a smaller `n_step` value        
 
     """
-    competitors = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
+    competitors = [Ashgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(
