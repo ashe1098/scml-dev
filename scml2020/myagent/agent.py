@@ -169,7 +169,7 @@ class LegacyAshgent(
         return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
 
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
-        production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
+        production_cost = self.awi.profile.costs[0, self.awi.my_input_product]
         if sell:
             return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
         return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
@@ -214,7 +214,7 @@ def test():
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
-            n_steps=100
+            n_steps=50
         ),
         construct_graphs=True,
     )
@@ -303,4 +303,4 @@ def run(competition='std',
 
 
 if __name__ == '__main__':    
-    test()
+    run()

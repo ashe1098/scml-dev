@@ -34,6 +34,7 @@ from pprint import pprint
 import pandas as pd
 import seaborn as sns
 from .prediction import MyERPredictor
+from .controller import MyController
 
 class MyNegotiationManager:
     """
@@ -57,15 +58,15 @@ class MyNegotiationManager:
         self._time_threshold = time_threshold
         self._price_weight = price_weight
         self._utility_threshold = utility_threshold
-        self.controllers: Dict[bool, SyncController] = {
-            False: SyncController(
+        self.controllers: Dict[bool, MyController] = {
+            False: MyController(
                 is_seller=False,
                 parent=self,
                 price_weight=self._price_weight,
                 time_threshold=self._time_threshold,
                 utility_threshold=self._utility_threshold,
             ),
-            True: SyncController(
+            True: MyController(
                 is_seller=True,
                 parent=self,
                 price_weight=self._price_weight,
@@ -101,21 +102,27 @@ class MyNegotiationManager:
             )
             if needs < 1:
                 continue
+            production_cost = np.max(self.awi.profile.costs[0, self.awi.my_input_product])
             if seller:
-                min_price = (
-                    self.awi.catalog_prices[self.awi.my_input_product]
-                    + self.awi.profile.costs[0, self.awi.my_input_product]  # 市場より安くても在庫過多のとき，もしくは終盤のときは売るべし
-                )
-                price_range = (min_price, 2 * min_price)
+                min_price = production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
+                # min_price = (
+                #     self.awi.catalog_prices[self.awi.my_input_product]
+                #     + self.awi.profile.costs[0, self.awi.my_input_product]  # 市場より安くても在庫過多のとき，もしくは終盤のときは売るべし
+                # )
+                price_range = (min_price, 5 * min_price)
             else:
                 price_range = (
                     0,
-                    min(
-                        self.awi.catalog_prices[self.awi.my_input_product],
-                        self.awi.catalog_prices[self.awi.my_output_product]
-                        - self.awi.profile.costs[0, product],  # 市場価格よりもほしいときは買うべし．あとで調整
-                    ),
+                    self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
                 )
+                # price_range = (
+                #     0,
+                #     min(
+                #         self.awi.catalog_prices[self.awi.my_input_product],
+                #         self.awi.catalog_prices[self.awi.my_output_product]
+                #         - self.awi.profile.costs[0, product],  # 市場価格よりもほしいときは買うべし．あとで調整
+                #     ),
+                # )
             if price_range[0] >= price_range[1]:
                 continue
             self.awi.request_negotiations(
@@ -226,7 +233,7 @@ class LegacyNegotiationManager(MyERPredictor, NegotiationManager):
         #     f"on u={uvalues}, q={qvalues}, t={tvalues}"
         #     f" with {str(partners)} using {str(controller)}"
         # )
-        self.awi.request_negotiations(
+        self.awi.request_negotiations(  # NegotiationManagerでは_start_negotiations時に呼び出すが，このクラスではステップ時．細かいことはControllerに任せるという仕様?
             is_buy=not sell,
             product=product,
             quantity=qvalues,
