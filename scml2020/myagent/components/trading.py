@@ -21,7 +21,7 @@ import seaborn as sns
 from .prediction import MyTradePredictor, MyERPredictor
 
 class MyTrader(MyTradePredictor, MyERPredictor, TradingStrategy):  # MyERPredictorいる？？？
-    """
+    """ super().on_contracts_finalizedとか，二重で処理しちゃいそうだから以下のクラスを直接オーバライドはしない
     TradingStrategy
     ReactiveTradingStrategy
     *PredictionBasedTradingStrategy
