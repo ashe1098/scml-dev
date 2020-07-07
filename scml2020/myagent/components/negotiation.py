@@ -33,16 +33,120 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 import pandas as pd
 import seaborn as sns
+from .prediction import MyERPredictor
 
-# class MyERPredictor(MeanERPStrategy):  
-#     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
-#     # PredictionBasedTradingStrategyとStepNegotiationManagerでしか使われてない
-#     """
-#     ExecutionRatePredictionStrategy
-#     FixedERPStrategy
-#     MeanERPStrategy
-#     """
-#     pass
+class MyNegotiationManager:
+    """
+    NegotiationManager
+    StepNegotiationManager  # StepController
+    IndependentNegotiationsManager  # Controllerを使わない
+    *MovingRangeNegotiationManager  # SyncController
+    """
+    def __init__(
+        self,
+        *args,
+        price_weight=0.7,
+        utility_threshold=0.9,
+        time_threshold=0.9,
+        time_horizon=0.1,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.index: List[int] = None
+        self.time_horizon = time_horizon
+        self._time_threshold = time_threshold
+        self._price_weight = price_weight
+        self._utility_threshold = utility_threshold
+        self.controllers: Dict[bool, SyncController] = {
+            False: SyncController(
+                is_seller=False,
+                parent=self,
+                price_weight=self._price_weight,
+                time_threshold=self._time_threshold,
+                utility_threshold=self._utility_threshold,
+            ),
+            True: SyncController(
+                is_seller=True,
+                parent=self,
+                price_weight=self._price_weight,
+                time_threshold=self._time_threshold,
+                utility_threshold=self._utility_threshold,
+            ),
+        }
+        self._current_end = -1
+        self._current_start = -1
+
+    def step(self):
+        super().step()
+        step = self.awi.current_step
+        self._current_start = step + 1
+        self._current_end = min(
+            self.awi.n_steps - 1,
+            self._current_start + max(1, int(self.time_horizon * self.awi.n_steps)),
+        )
+        if self._current_start >= self._current_end:
+            return
+        for seller, needed, secured, product in [
+            (False, self.inputs_needed, self.inputs_secured, self.awi.my_input_product),
+            (
+                True,
+                self.outputs_needed,
+                self.outputs_secured,
+                self.awi.my_output_product,
+            ),
+        ]:
+            needs = np.max(
+                needed[self._current_start : self._current_end]
+                - secured[self._current_start : self._current_end]
+            )
+            if needs < 1:
+                continue
+            if seller:
+                min_price = (
+                    self.awi.catalog_prices[self.awi.my_input_product]
+                    + self.awi.profile.costs[0, self.awi.my_input_product]  # 市場より安くても在庫過多のとき，もしくは終盤のときは売るべし
+                )
+                price_range = (min_price, 2 * min_price)
+            else:
+                price_range = (
+                    0,
+                    min(
+                        self.awi.catalog_prices[self.awi.my_input_product],
+                        self.awi.catalog_prices[self.awi.my_output_product]
+                        - self.awi.profile.costs[0, product],  # 市場価格よりもほしいときは買うべし．あとで調整
+                    ),
+                )
+            if price_range[0] >= price_range[1]:
+                continue
+            self.awi.request_negotiations(
+                not seller,
+                product,
+                (1, needs),
+                price_range,
+                time=(self._current_start, self._current_end),
+                controller=self.controllers[seller],
+            )
+
+
+    def respond_to_negotiation_request(
+        self,
+        initiator: str,
+        issues: List[Issue],
+        annotation: Dict[str, Any],
+        mechanism: AgentMechanismInterface,
+    ) -> Optional[Negotiator]:
+        if not (
+            issues[TIME].min_value < self._current_end
+            or issues[TIME].max_value > self._current_start
+        ):
+            return None
+        controller = self.controllers[not annotation["is_buy"]]
+        if controller is None:
+            return None
+        return controller.create_negotiator()
+
+
+
 
 @dataclass
 class ControllerInfo:
@@ -55,33 +159,33 @@ class ControllerInfo:
     expected: int
     done: bool = False
 
-class MyNegotiationManager(StepNegotiationManager):
+class LegacyNegotiationManager(MyERPredictor, NegotiationManager):
     """
     NegotiationManager
-    StepNegotiationManager
+    *StepNegotiationManager
     IndependentNegotiationsManager
     MovingRangeNegotiationManager
     """
-    # def __init__(
-    #     self,
-    #     *args,
-    #     negotiator_type: Union[SAONegotiator, str] = AspirationNegotiator,
-    #     negotiator_params: Optional[Dict[str, Any]] = None,
-    #     **kwargs,
-    # ):
-    #     super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        *args,
+        negotiator_type: Union[SAONegotiator, str] = AspirationNegotiator,
+        negotiator_params: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
 
-    #     # save construction parameters
-    #     self.negotiator_type = get_class(negotiator_type)
-    #     self.negotiator_params = (
-    #         negotiator_params if negotiator_params is not None else dict()
-    #     )
+        # save construction parameters
+        self.negotiator_type = get_class(negotiator_type)
+        self.negotiator_params = (
+            negotiator_params if negotiator_params is not None else dict()
+        )
 
-    #     # attributes that will be read during init() from the AWI
-    #     # -------------------------------------------------------
-    #     self.buyers = self.sellers = None
-    #     """Buyer controllers and seller controllers. Each of them is responsible of covering the
-    #     needs for one step (either buying or selling)."""
+        # attributes that will be read during init() from the AWI
+        # -------------------------------------------------------
+        self.buyers = self.sellers = None
+        """Buyer controllers and seller controllers. Each of them is responsible of covering the
+        needs for one step (either buying or selling)."""
 
     def init(self):
         super().init()
@@ -128,7 +232,7 @@ class MyNegotiationManager(StepNegotiationManager):
             quantity=qvalues,
             unit_price=uvalues,
             time=tvalues,
-            partners=partners,
+            partners=partners,  # これのリストを部分的に渡せば，交渉相手を制限できそう？
             controller=controller,
             extra=dict(controller_index=step, is_seller=sell),
         )
@@ -261,24 +365,3 @@ class MyNegotiationManager(StepNegotiationManager):
     def _get_controller(self, mechanism) -> StepController:
         neg = self._running_negotiations[mechanism.id]
         return neg.negotiator.parent
-
-
-    def target_quantity(self, step: int, sell: bool) -> int:
-        # """A fixed target quantity of half my production capacity"""
-        # return self.awi.n_lines // 2
-        return self.awi.n_lines
-
-    def acceptable_unit_price(self, step: int, sell: bool) -> int:
-        # """The catalog price seems OK"""
-        # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
-
-        op = self.awi.catalog_prices[self.awi.my_output_product]
-        inp = self.awi.catalog_prices[self.awi.my_input_product]
-        rate = op / inp
-        return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
-
-    # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):
-    #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
-    #     if is_seller:
-    #         return LinearUtilityFunction((0, 0.25, 1))
-    #     return LinearUtilityFunction((0, -0.5, -0.8))

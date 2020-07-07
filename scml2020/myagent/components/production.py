@@ -14,10 +14,10 @@ from pprint import pprint
 import pandas as pd
 import seaborn as sns
 
-class MyProductor(SupplyDrivenProductionStrategy):  
+class MyProductor(ProductionStrategy):  
     """
     ProductionStrategy
-    SupplyDrivenProductionStrategy  # 買う契約を締結したら，買ったもの全てを作る
+    *SupplyDrivenProductionStrategy  # 買う契約を締結したら，買ったもの全てを作る
     DemandDrivenProductionStrategy  # 売る契約を締結したら，それまでに作る
     TradeDrivenProductionStrategy  # 買う契約と売る契約それぞれに対して，生産ラインを確保しているが，そんなことする必要ある？
     """

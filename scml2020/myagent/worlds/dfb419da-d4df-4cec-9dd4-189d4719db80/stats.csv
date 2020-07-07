@@ -1,0 +1,9 @@
+index,n_registered_negotiations_before,n_contracts_dropped,n_contracts_nullified_now,n_bankrupt,trading_price_0,sold_quantity_0,unit_price_0,trading_price_1,sold_quantity_1,unit_price_1,trading_price_2,sold_quantity_2,unit_price_2,trading_price_3,sold_quantity_3,unit_price_3,productivity,market_size,production_failures,bankruptcy,n_contracts_executed,n_contracts_erred,n_contracts_nullified,n_contracts_cancelled,n_breaches,breach_level,n_contracts_signed,n_contracts_concluded,n_negotiations,n_negotiation_rounds_successful,n_negotiation_rounds_failed,n_negotiation_successful,n_negotiation_failed,n_registered_negotiations_after,activity_level,step_time,total_time
+0,0,0,0,0,10.0,20,10.0,19.0,0,,26.0,0,,35.0,0,,0.0,14100,0.0,0.0,11,0,0,1,0,0.0,31,32,0,0,0,0,0,0,200,0.03769570402801037,0.03769570402801037
+1,0,0,0,0,10.0,20,10.0,19.0,0,,26.0,0,,35.0,0,,0.0,13900,0.0,0.0,10,0,0,0,0,0.0,20,20,0,0,0,0,0,0,200,0.047065479680895805,0.08476118370890617
+2,0,0,0,0,10.0,18,10.0,19.0,0,,26.0,0,,35.0,0,,0.0,13720,0.0,0.0,10,0,0,0,0,0.0,20,20,0,0,0,0,0,0,180,0.020587235689163208,0.10534841939806938
+3,0,0,0,0,10.0,20,10.0,19.0,0,,26.0,0,,35.0,20,35.0,0.0,13243,0.0,0.0,20,0,0,0,0,0.0,11,11,0,0,0,0,0,0,900,0.047917887568473816,0.1532663069665432
+4,0,0,0,0,10.0,20,10.0,19.0,0,,26.0,0,,35.0,20,35.0,0.0,12766,0.0,0.0,20,0,0,0,0,0.0,11,11,0,0,0,0,0,0,900,0.07223239354789257,0.22549870051443574
+5,0,0,0,0,10.0,0,,19.0,0,,26.0,0,,35.0,20,35.0,0.0,12491,0.0,0.0,11,0,0,0,0,0.0,12,12,0,0,0,0,0,0,700,0.06109810434281826,0.28659680485725403
+6,0,0,0,0,10.0,0,,19.0,0,,26.0,0,,34.99999999999999,20,35.0,0.0,12219,0.0,0.0,11,0,0,0,0,0.0,0,0,0,0,0,0,0,0,700,0.0035529974848032,0.29014980234205723
+7,0,0,0,0,10.0,0,,19.0,0,,26.0,0,,35.0,20,35.0,0.0,11876,0.0,0.0,12,0,0,0,0,0.0,0,0,0,0,0,0,0,0,700,0.0033562686294317245,0.2935060709714889

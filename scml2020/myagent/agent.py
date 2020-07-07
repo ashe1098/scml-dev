@@ -57,6 +57,9 @@ from scml.scml2020 import PredictionBasedTradingStrategy
 from scml.scml2020 import MovingRangeNegotiationManager
 from scml.scml2020 import TradeDrivenProductionStrategy
 
+from typing import Tuple
+from negmas import LinearUtilityFunction
+
 # my need
 from scml.scml2020 import *
 from negmas import *
@@ -67,11 +70,11 @@ import seaborn as sns
 
 # my module
 from components.production import MyProductor  # 提出時は.components.productionにする
-from components.negotiation import MyNegotiationManager
-from components.trading import MyTrader, MyTradePredictor
+from components.negotiation import MyNegotiationManager, LegacyNegotiationManager
+from components.trading import MyTrader
 
+# *DecentralizingAgent
 class Ashgent(
-    MyTradePredictor,
     MyProductor,
     MyNegotiationManager,
     MyTrader,
@@ -87,17 +90,90 @@ class Ashgent(
     3. A production strategy that decides what to produce
 
     """
-    pass
+
+    def step(self):
+        super().step()
+        # print(self.awi.reports_of_agent(self.id))  # エージェントのIDからFinancialReportを取得
+        # if self.awi.current_step > 10:  # 0はダメ
+        #     print(self.awi.reports_at_step(self.awi.current_step - 1))  # ステップ番号からFinancialReportを取得, 指定できるステップ以前に発行された最新のFinancialReportが取得できると思われる, current_step以前のステップを指定
+        #     # print(self.awi.reports_at_step(4))  # Noneが返ってくる謎(古いステップのFinantialReportは5ステップずつしか残ってない？)
+
+    def target_quantity(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
+        # """A fixed target quantity of half my production capacity"""
+        # return self.awi.n_lines // 2
+
+        ## 改良 ##
+        return self.awi.n_lines
+
+        # ## 元 ##
+        # if sell:
+        #     needed, secured = self.outputs_needed, self.outputs_secured
+        # else:
+        #     needed, secured = self.inputs_needed, self.inputs_secured
+
+        # return needed[step - 1] - secured[step - 1]  # stepが1から始まるから-1する必要あり．元のやつバグってるわ
+
+    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:  # これがあればtarget_quantityは使わないっぽい
+        """Implemented for speed but not really required"""
+
+        if sell:
+            needed, secured = self.outputs_needed, self.outputs_secured
+        else:
+            needed, secured = self.inputs_needed, self.inputs_secured
+
+        return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
+
+    def acceptable_unit_price(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
+        # """The catalog price seems OK"""
+        # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
+
+        # ## 改良 ## 
+        # op = self.awi.catalog_prices[self.awi.my_output_product]
+        # inp = self.awi.catalog_prices[self.awi.my_input_product]
+        # rate = op / inp
+        # return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
+        
+        ## 元 ##
+        production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
+        if sell:
+            return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
+        return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
+
+    # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):  # IndependentNegotiationsManagerはContorollerを使わないため，ufun関数の定義がここで必要
+    #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
+    #     if is_seller:
+    #         return LinearUtilityFunction((0, 0.25, 1))
+    #     return LinearUtilityFunction((0, -0.5, -0.8))
+
 
 
 ########## for test ########################################
 class LegacyAshgent(
-    TradeDrivenProductionStrategy,
-    MovingRangeNegotiationManager,
-    PredictionBasedTradingStrategy,
+    MyProductor,
+    LegacyNegotiationManager,
+    MyTrader,
     SCML2020Agent
 ):
-    pass
+    def step(self):
+        super().step()
+
+    def target_quantity(self, step: int, sell: bool) -> int:
+        return self.awi.n_lines
+
+    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:
+        if sell:
+            needed, secured = self.outputs_needed, self.outputs_secured
+        else:
+            needed, secured = self.inputs_needed, self.inputs_secured
+
+        return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
+
+    def acceptable_unit_price(self, step: int, sell: bool) -> int:
+        production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
+        if sell:
+            return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
+        return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
+
 
 
 from collections import defaultdict
@@ -134,11 +210,11 @@ def analyze_unit_price(world, agent_type):
     return contracts.groupby(["selling", "buying"]).describe().round(1)
 
 def test():
-    agent_types = [Ashgent, DecentralizingAgent]
+    agent_types = [Ashgent, LegacyAshgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
-            n_steps=20
+            n_steps=100
         ),
         construct_graphs=True,
     )
@@ -181,7 +257,7 @@ def test():
 
 def run(competition='std',
          reveal_names=True,
-         n_steps=20,
+         n_steps=50,
          n_configs=2,
          max_n_worlds_per_config=None,
          n_runs_per_world=1
@@ -208,7 +284,7 @@ def run(competition='std',
         - To speed it up, use a smaller `n_step` value        
 
     """
-    competitors = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
+    competitors = [Ashgent, LegacyAshgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(
@@ -227,4 +303,4 @@ def run(competition='std',
 
 
 if __name__ == '__main__':    
-    run()
+    test()
