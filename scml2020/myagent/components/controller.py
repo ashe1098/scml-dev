@@ -29,7 +29,7 @@ from negmas import ResponseType, Issue
 from negmas.sao import SAOState, SAOResponse
 from scml.scml2020.common import TIME, QUANTITY, UNIT_PRICE
 
-class MyController(SAOSyncController):  # SyncController
+class SyncController(SAOSyncController):
     """
     Will try to get the best deal which is defined as being nearest to the agent needs and with lowest price
     """

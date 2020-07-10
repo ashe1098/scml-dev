@@ -37,6 +37,16 @@ class MyProductor(ProductionStrategy):
         rejectors: List[List[str]],
     ) -> None:
         super().on_contracts_finalized(signed, cancelled, rejectors)
+
+        # defcit =  (
+        #     self.awi.catalog_prices[self.awi.my_output_product] 
+        #     - self.awi.catalog_prices[self.awi.my_input_product]
+        # ) / 2 < self.awi.profile.costs[0, self.awi.my_input_product]  # 在庫の生産が，そのステップにおいて赤字になるか
+        # final_defcit = (
+        #     self.awi.catalog_prices[self.awi.my_output_product] 
+        #     - self.awi.catalog_prices[self.awi.my_input_product]
+        # ) / 2 < self.awi.profile.costs[0, self.awi.my_input_product]  # 在庫の生産が，最終スコアにおいて赤字になるか
+        
         latest = self.awi.n_steps - 2  # 最悪どこまで遅い生産を許容するか
         earliest_production = self.awi.current_step
         for contract in signed:
@@ -62,3 +72,28 @@ class MyProductor(ProductionStrategy):
                 max(steps) if len(steps) > 0 else -1,
                 is_seller,
             )
+
+        # for contract in signed:  # 最終盤に余りそうな在庫は，生産を調整して余分な生産を控える(DemandDrivenProductionStrategy)
+        #     is_seller = contract.annotation["seller"] == self.id
+        #     if not is_seller:
+        #         continue
+        #     step = contract.agreement["time"]
+        #     # find the earliest time I can do anything about this contract
+        #     earliest_production = self.awi.current_step
+        #     if step > self.awi.n_steps - 1 or step < earliest_production:
+        #         continue
+        #     # if I am a seller, I will schedule production
+        #     output_product = contract.annotation["product"]
+        #     input_product = output_product - 1
+        #     steps, _ = self.awi.schedule_production(
+        #         process=input_product,
+        #         repeats=contract.agreement["quantity"],
+        #         step=(earliest_production, step - 1),
+        #         line=-1,
+        #         partial_ok=True,
+        #     )
+        #     self.schedule_range[contract.id] = (
+        #         min(steps) if len(steps) > 0 else -1,
+        #         max(steps) if len(steps) > 0 else -1,
+        #         is_seller,
+        #     )
