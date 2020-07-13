@@ -37,13 +37,20 @@ class MyProductor(ProductionStrategy):
         rejectors: List[List[str]],
     ) -> None:
         super().on_contracts_finalized(signed, cancelled, rejectors)
+
+        current_step = self.awi.current_step
+        defcit = (
+            self.output_price[current_step] - self.input_cost[current_step]
+            ) / 2 < self.awi.profile.costs[0, self.awi.my_input_product]  # 在庫の生産が，そのステップにおいて赤字になるか
+        passive = self.awi.n_steps * 0.8  # どのへんから生産を慎重になるか
         latest = self.awi.n_steps - 2  # 最悪どこまで遅い生産を許容するか
         earliest_production = self.awi.current_step
         for contract in signed:
+            step = contract.agreement["time"]
+            # if step < passive:
             is_seller = contract.annotation["seller"] == self.id
             if is_seller:
                 continue
-            step = contract.agreement["time"]
             # find the earliest time I can do anything about this contract
             if step > latest + 1 or step < earliest_production:
                 continue
@@ -62,3 +69,28 @@ class MyProductor(ProductionStrategy):
                 max(steps) if len(steps) > 0 else -1,
                 is_seller,
             )
+
+            # elif not defcit: # 最終盤に余りそうな在庫は，生産を調整して余分な生産を控える(DemandDrivenProductionStrategy)
+            #     is_seller = contract.annotation["seller"] == self.id
+            #     if not is_seller:
+            #         continue
+            #     # step = contract.agreement["time"]
+            #     # find the earliest time I can do anything about this contract
+            #     earliest_production = self.awi.current_step
+            #     if step > self.awi.n_steps - 1 or step < earliest_production:
+            #         continue
+            #     # if I am a seller, I will schedule production
+            #     output_product = contract.annotation["product"]
+            #     input_product = output_product - 1
+            #     steps, _ = self.awi.schedule_production(
+            #         process=input_product,
+            #         repeats=contract.agreement["quantity"],
+            #         step=(earliest_production, step - 1),
+            #         line=-1,
+            #         partial_ok=True,
+            #     )
+            #     self.schedule_range[contract.id] = (
+            #         min(steps) if len(steps) > 0 else -1,
+            #         max(steps) if len(steps) > 0 else -1,
+            #         is_seller,
+            #     )

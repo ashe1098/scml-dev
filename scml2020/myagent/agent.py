@@ -67,13 +67,13 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 import pandas as pd
 import seaborn as sns
+import math
 
 # my module
 from components.production import MyProductor  # 提出時は.components.productionにする
 from components.negotiation import MyNegotiationManager, LegacyNegotiationManager
 from components.trading import MyTrader
 
-# *DecentralizingAgent
 class Ashgent(
     MyProductor,
     MyNegotiationManager,
@@ -126,12 +126,6 @@ class Ashgent(
     def acceptable_unit_price(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
         # """The catalog price seems OK"""
         # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
-
-        # ## 改良 ## 
-        # op = self.awi.catalog_prices[self.awi.my_output_product]
-        # inp = self.awi.catalog_prices[self.awi.my_input_product]
-        # rate = op / inp
-        # return op / rate if sell else inp  # buyのときinp以下は受け入れないべきか？
         
         ## 元 ##
         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
@@ -158,6 +152,12 @@ class LegacyAshgent(
         super().step()
 
     def target_quantity(self, step: int, sell: bool) -> int:
+        # if self.awi.current_step < self.awi.n_steps * 0.2:
+        #     return math.floor(self.awi.n_lines * 1.5)
+        # elif self.awi.current_step < self.awi.n_steps * 0.9:
+        #     return self.awi.n_lines
+        # else:
+        #     return self.awi.n_lines // 3
         return self.awi.n_lines
 
     def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:
@@ -169,7 +169,7 @@ class LegacyAshgent(
         return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
 
     def acceptable_unit_price(self, step: int, sell: bool) -> int:
-        production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
+        production_cost = self.awi.profile.costs[0, self.awi.my_input_product]
         if sell:
             return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
         return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
@@ -214,7 +214,7 @@ def test():
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
-            n_steps=100
+            n_steps=50
         ),
         construct_graphs=True,
     )
@@ -245,6 +245,16 @@ def test():
     # print(analyze_unit_price(world, "DecentralizingAgent"))
 
     show_agent_scores(world)
+
+    # fig, axs = plt.subplots(2, 2)
+    # for ax, key in zip(axs.flatten().tolist(), ["trading_price", "sold_quantity", "unit_price"]):
+    #     for p in range(world.n_products):
+    #         ax.plot(world.stats[f"{key}_{p}"], marker="x", label=f"Product {p}")
+    #         ax.set_ylabel(key.replace("_", " ").title())
+    #         ax.legend().set_visible(False)
+    # axs[-1, 0].legend(bbox_to_anchor=(1, -.5), ncol=3)
+    # fig.show()
+    # plt.show()
 
     # world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
     # plt.show()
@@ -303,4 +313,4 @@ def run(competition='std',
 
 
 if __name__ == '__main__':    
-    test()
+    run()

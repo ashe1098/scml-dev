@@ -46,8 +46,11 @@ class MyTradePredictor(TradePredictionStrategy):
 
 
     def trade_prediction_step(self):
-        # print(self.expected_outputs)
-        pass
+        if self.awi.current_step < self.awi.n_steps - 1:
+            self.output_price[self.awi.current_step + 1] = self.output_price[self.awi.current_step]
+            self.input_cost[self.awi.current_step + 1] = self.input_cost[self.awi.current_step]
+        # print(self.id, self.input_cost[self.awi.current_step - 3:self.awi.current_step + 1])
+        # print(self.awi.current_step, self.id, self.input_cost)
 
     @property
     def internal_state(self):
@@ -86,15 +89,33 @@ class MyTradePredictor(TradePredictionStrategy):
             return latest_breach_level
 
         for contract in signed:
-            t, q = contract.agreement["time"], contract.agreement["quantity"]
-
-             # breach_levelを参照して予測値を調整，ステップ数が増えると効いてくる（多分）
+            t, q, p = contract.agreement["time"], contract.agreement["quantity"], contract.agreement["unit_price"]
+            # print(self.id, t, q, p)
+            step = self.awi.current_step
+            contract_weight = 0.5  # 契約による影響度 0.5以下でどれくらいがいいかな？
+            # breach_levelを参照して予測値を調整，ステップ数が増えると効いてくる（多分）
             if contract.annotation["seller"] == self.id:
-                self.expected_outputs[t] += q * (1 - pow(check_breach(contract, True), 1)) # 何乗かするより1乗のままが一番性能良かった
+                penalty = pow(check_breach(contract, True), 1) # 何乗かするより1乗のままが一番性能良かった
+                self.expected_outputs[t] += q * (1 - penalty)  # 数の予測
+                # 価格も予測してみる
+                if step >= 3:
+                    predict = self.output_price[step - 1]
+                    for i in range(q):
+                        predict = ((1 - contract_weight) * predict + contract_weight * p)
+                    predict = round((penalty * self.output_price[step - 1] + (1 - penalty) * predict))  # 整数のみだから四捨五入
+                    self.output_price[step] = round((self.output_price[step - 3] + self.output_price[step - 2] + predict) / 3)  # 3step前まで反映
             else:
-                self.expected_inputs[t] += q * (1 - pow(check_breach(contract, False), 1))
-
-
+                penalty = pow(check_breach(contract, False), 1)
+                self.expected_inputs[t] += q * (1 - penalty)  # 数の予測
+                if step >= 3:
+                    # 価格も予測してみる
+                    predict = self.input_cost[step - 1]
+                    for i in range(q):
+                        predict = ((1 - contract_weight) * predict + contract_weight * p)
+                    predict = round((penalty * self.input_cost[step - 1] + (1 - penalty) * predict))  # 整数のみだから四捨五入
+                    self.input_cost[step] = round((self.input_cost[step - 3] + self.input_cost[step - 2] + predict) / 3)  # 3step前まで反映
+            
+            
 class MyERPredictor(ExecutionRatePredictionStrategy):  
     # 継承して利用する際は最初の引数にしないと反映されない(MRO的に)
     # PredictionBasedTradingStrategyとStepNegotiationManagerでしか使われてない
