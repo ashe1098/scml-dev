@@ -74,10 +74,9 @@ from components.production import MyProductor  # 提出時は.components.product
 from components.negotiation import MyNegotiationManager, LegacyNegotiationManager
 from components.trading import MyTrader
 
-# *DecentralizingAgent
 class Ashgent(
     MyProductor,
-    LegacyNegotiationManager,
+    MyNegotiationManager,
     MyTrader,
     SCML2020Agent
 ):
@@ -247,15 +246,15 @@ def test():
 
     show_agent_scores(world)
 
-    fig, axs = plt.subplots(2, 2)
-    for ax, key in zip(axs.flatten().tolist(), ["trading_price", "sold_quantity", "unit_price"]):
-        for p in range(world.n_products):
-            ax.plot(world.stats[f"{key}_{p}"], marker="x", label=f"Product {p}")
-            ax.set_ylabel(key.replace("_", " ").title())
-            ax.legend().set_visible(False)
-    axs[-1, 0].legend(bbox_to_anchor=(1, -.5), ncol=3)
-    fig.show()
-    plt.show()
+    # fig, axs = plt.subplots(2, 2)
+    # for ax, key in zip(axs.flatten().tolist(), ["trading_price", "sold_quantity", "unit_price"]):
+    #     for p in range(world.n_products):
+    #         ax.plot(world.stats[f"{key}_{p}"], marker="x", label=f"Product {p}")
+    #         ax.set_ylabel(key.replace("_", " ").title())
+    #         ax.legend().set_visible(False)
+    # axs[-1, 0].legend(bbox_to_anchor=(1, -.5), ncol=3)
+    # fig.show()
+    # plt.show()
 
     # world.draw(steps=(0, world.n_steps), together=False, ncols=2, figsize=(20, 20))
     # plt.show()
