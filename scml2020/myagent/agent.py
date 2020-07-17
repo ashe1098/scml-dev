@@ -71,12 +71,12 @@ import math
 
 # my module
 from components.production import MyProductor  # 提出時は.components.productionにする
-from components.negotiation import MyNegotiationManager, LegacyNegotiationManager
+from components.negotiation import NewNegotiationManager, MyNegotiationManager
 from components.trading import MyTrader
 
-class Ashgent(
+class NewAshgent(  # 性能出なかったので没
     MyProductor,
-    MyNegotiationManager,
+    NewNegotiationManager,
     MyTrader,
     SCML2020Agent
 ):
@@ -141,10 +141,9 @@ class Ashgent(
 
 
 
-########## for test ########################################
-class LegacyAshgent(
+class Ashgent(
     MyProductor,
-    LegacyNegotiationManager,
+    MyNegotiationManager,
     MyTrader,
     SCML2020Agent
 ):
@@ -176,6 +175,7 @@ class LegacyAshgent(
 
 
 
+########## for test ########################################
 from collections import defaultdict
 def show_agent_scores(world):
     scores = defaultdict(list)
@@ -210,7 +210,7 @@ def analyze_unit_price(world, agent_type):
     return contracts.groupby(["selling", "buying"]).describe().round(1)
 
 def test():
-    agent_types = [Ashgent, LegacyAshgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
+    agent_types = [NewAshgent, Ashgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
     world = SCML2020World(
         **SCML2020World.generate(
             agent_types=agent_types,
@@ -294,7 +294,8 @@ def run(competition='std',
         - To speed it up, use a smaller `n_step` value        
 
     """
-    competitors = [Ashgent, LegacyAshgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
+    # competitors = [NewAshgent, Ashgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
+    competitors = [Ashgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(

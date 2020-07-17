@@ -51,7 +51,7 @@ class MyTradePredictor(TradePredictionStrategy):
             self.input_cost[self.awi.current_step + 1] = self.input_cost[self.awi.current_step]
         # print(self.id, self.input_cost[self.awi.current_step - 3:self.awi.current_step + 1])
         # print(self.awi.current_step, self.id, self.input_cost)
-
+        
     @property
     def internal_state(self):
         state = super().internal_state
@@ -103,7 +103,7 @@ class MyTradePredictor(TradePredictionStrategy):
                     for i in range(q):
                         predict = ((1 - contract_weight) * predict + contract_weight * p)
                     predict = round((penalty * self.output_price[step - 1] + (1 - penalty) * predict))  # 整数のみだから四捨五入
-                    self.output_price[step] = round((self.output_price[step - 3] + self.output_price[step - 2] + predict) / 3)  # 3step前まで反映
+                    self.output_price[step - 1] = round((self.output_price[step - 3] + self.output_price[step - 2] + predict) / 3)  # 3step前まで反映
             else:
                 penalty = pow(check_breach(contract, False), 1)
                 self.expected_inputs[t] += q * (1 - penalty)  # 数の予測
@@ -113,7 +113,7 @@ class MyTradePredictor(TradePredictionStrategy):
                     for i in range(q):
                         predict = ((1 - contract_weight) * predict + contract_weight * p)
                     predict = round((penalty * self.input_cost[step - 1] + (1 - penalty) * predict))  # 整数のみだから四捨五入
-                    self.input_cost[step] = round((self.input_cost[step - 3] + self.input_cost[step - 2] + predict) / 3)  # 3step前まで反映
+                    self.input_cost[step - 1] = round((self.input_cost[step - 3] + self.input_cost[step - 2] + predict) / 3)  # 3step前まで反映
             
             
 class MyERPredictor(ExecutionRatePredictionStrategy):  
