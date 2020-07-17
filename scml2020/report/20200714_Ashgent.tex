@@ -1,0 +1,236 @@
+\documentclass[10pt]{article}
+\usepackage{authblk}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\renewcommand*{\Authsep}{, }
+\renewcommand*{\Authand}{, }
+\renewcommand*{\Authands}{, }
+\renewcommand*{\Affilfont}{\normalsize\normalfont}
+\renewcommand*{\Authfont}{\bfseries}    % make author names boldface
+% \setlength{\affilsep}{2em}   % set the space between author and affiliation
+
+\title{Ashgent: An agent submitted to the ANAC 2020 SCM league}
+\author[1]{Shuhei Aoyama}
+\author[2]{Takanobu Otsuka}
+\affil[1,2]{Nagoya Institute of Technology, Aichi, Japan}
+\affil[1]{aoyama.shuhei@otsukalab.nitech.ac.jp}
+\affil[2]{otsuka.takanobu@otsukalab.nitech.ac.jp}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+    % This template is provided \emph{as a recommendation}. You are not required 
+    % to use it for writing your report. The only requirement is that the report 
+    % falls within two to four A4 pages with a font between 10 and 12 for the main
+    % text. You can and is encouraged to use figures to illustrate the general 
+    % design and the evaluation of your agent. 
+
+% Ashgentは交渉する相手のbreach levelに注目してリスクマネジメントを行う．
+Ashgent manages risk by focusing on the breach levels of the opponents to negotiate with.
+By looking at the breach level of the opponent to negotiate with, we adjust the amount of our needed/secured quantity.
+% 更に，Ashgentは利益を上げるために，取引する製品の市場価格を予測する
+Furthermore, we predict the spot market prices of the products we trade to make a profit
+% Thereby,Ashgentはビルトインエージェントとの競争において安定してより優れた性能を発揮する．
+Thereby, Ashgent stably performs better in competition with built-in agents.
+\end{abstract}
+
+
+\section{Introduction}
+% パラメータneeded/securedは交渉に使われる
+The parameters needed/secured are used for negotiation.
+% neededとsecuredの差が小さいほど，そのステップに必要なinput productsの在庫は十分に確保されていることを意味し，一方で差が大きいほど，input productsの在庫が不十分であることを意味する．
+The smaller the difference between needed and secured, the more the stock of the input product required for the step is sufficient, while the larger the difference, the more the stock of the input product is insufficient.
+% これらはそれぞれのステップで求められ，そのステップでどの交渉に署名するかを決定することに用いられる．
+These are asked for at each step and are used to determine which negotiations are signed at that step.
+% これらのパラメータを正確に求めることは，過不足ない量の在庫を確保するために必要不可欠なことである．
+It is essential that the exact determination of these parameters to ensure that there is no excess or shortage of inventory.
+
+% 入力製品と出力製品について，これらの価値はステップごとに更新される市場価格によって決まる．
+For input and output products, the value depends on the spot market price, which is updated step by step.
+% しかしこれらはシミュレーション中には公表されない．
+However, these are not published during the simulation.
+% そこでAshgentは，自身の署名した契約を用いることで,毎ステップごとに市場価格を予測する.
+Then Ashgent predicts the spot market price at each step by using its signed contracts.
+% 更に,自分の取り扱う製品がどれだけ価値のあるものかを予測し，振る舞いを変える．
+Furthermore, we predict the value of the products we handle and change our behavior.
+% 入力製品の価値が高いときは買い交渉を控えて価値が下がるのを待ち，出力製品の価値が高いときはなるべく高く売りつける．
+When the value of the input product is high, we refrain from negotiating and wait for the value of the input product to fall.
+While when the value of the output product is high, we sell it at the highest possible price.
+% そうすることで署名を柔軟に行い，他のエージェントとの差別化を図った．
+By making our signatures more flexible, differentiate Ashgent from other agents.
+
+
+\section{The Design of Ashgent}
+\subsection{Negotiation Choices}
+% AshgentはビルトインエージェントのDecentralizingAgentを元に作られている．
+Ashgent is based on the DecentralizingAgent, a built-in agent.
+% このレポートでは，DecentralizingAgentの構成要素のうち，Ashgentで改良された以下のビルトイン戦略について記述する．
+In this report, we describe the following built-in strategies of DecentralizingAgent that have been improved for the Ashgent:
+\begin{itemize}
+    % \item MyProductor
+    % \item MyERPredictor
+    \item MyTradePredictior (based on FixedTradePredictionStrategy) % breach level読み取り
+    \item MyTrader (based on PredictionBasedTradingStrategy)% 予測に基づいてneeded/securedを調整
+    \item MyManager (based on StepNegotiationManager) % 署名を柔軟に行うこと
+    % \item SCML2020Agent
+\end{itemize}
+
+% Ashgentは予測をベースとして戦略を立てている．
+Ashgent makes strategies based on predictions.
+% MyTradePredictiorでは必要な予測を包括して行う(on_contracts_finalizedが呼び出されるたびに)．
+In MyTradePredictior, each time the on\_contracts\_finalized method is called, the necessary predictions are made comprehensively.
+% MyTraderはMyTradePredictiorが予測した結果からneeded/securedを更新する．
+MyTrader updates the needed/secured from the results predicted by MyTradePredictior.
+% 同様にMyManagerはMyTradePredictiorが予測した結果から受入れ可能な価格を調整する(acceptable_unit_price)
+Similarly, in the acceptable\_unit\_price method, MyManager adjusts the acceptable prices from the predictions made by MyTradePredictior
+
+
+% \subsection{Utility Function}
+% \subsection{Concurrent Negotiation}
+\subsection{Risk Management}
+% リスクマネジメントに着目することは、利益を上げる方法の一つだ。
+Focusing on risk management is one way to make a profit.
+% 締結した自身の売り契約の不履行は損失につながる。
+Failure to execute the sell contracts that were concluded will result in a loss.
+% リスクを考慮した上で取引を行うことで、確実に在庫を確保し、計画通り生産を行えるようにする．
+By trading in consideration of risks, we will ensure inventory and that production can be carried out as planned.
+% そうして自身の売り契約の不履行を防ぎ、ひいては自分の工場が破産するという最悪の事態から身を守ることに繋がる。
+This will prevent breaches of sell contracts and thus protect ourselves from the worst of our factories going bankrupt.
+
+% the game descriptionによると、契約の不履行を行うたびにthe breach levelは大きくなる．
+According to the game description, the breach level increases with each breach of the contract. %  計算式必要？
+% これらはフィナンシャルレポートを通じて確認することができる．
+It can be confirmed through financial reports.
+% これを用いて、交渉がfinalizedされるたびに、Ashgentはその交渉によって（実際は）どれだけの量が確保できそうかを予測する．
+Using this, each time a negotiation is finalized, Ashgent predicts how much is likely to be secured by that negotiation.
+% 多めに交渉をして確保しておくことで、もし交渉がbreachしても、在庫不足で生産が行えなくなるという事態が防げる。
+By negotiating and securing a large amount of stock, we can prevent a situation in which production cannot be carried out due to a shortage of stock, even if the negotiation breaches.
+
+% Ashgentは締結した契約に対し，以下のような計算式で（実際に）得られそうな量を予測する．
+Ashgent predicts the amount that will be obtained for the contracts concluded using the following formula:
+\begin{equation}
+    quantity = q * (1 -  breach\_level),
+\end{equation}
+% where qは契約で合意した量，breach\_levelはフィナンシャルレポートから持ってきた契約の相手のbreach levelである．
+where $q$ is the amount agreed upon in the contract, and $breach_level$ is the breach level of the counterparty to the contract, which is taken from the financial report.
+% breach\_levelをペナルティーとして課されることで求められたQuantity分が，neededから減算され，securedに加算される．
+$quantity$ calculated by penalizing $breach\_level$ is subtracted from needed and added to secured.
+
+% 契約相手がbreachしたことがなければqがそのままQuantityとなり，契約相手が行ったbreachが多いほどQuantityは小さくなる．
+If the counterparty has never breached, $q$ becomes the $quantity$ as it is, and the more breaches made by the counterparty, the smaller the quantity.
+% Quantityが小さくなればなるほどneeded/securedに及ぼす影響が小さくなる．その分Ashgentはより多くの契約に署名するように振る舞う．
+The smaller the $quantity$, the smaller the effect on needed/secured.
+That makes Ashgent behave as if it signed more contracts.
+% 契約を不履行されても，不利益を抑えることができる．
+As a result, it is possible to limit the disadvantages if the contract is not fulfilled.
+
+
+\subsection{Spot Market Prices Prediction}
+% 市場価格を予測し、市場の動向を掴むことは、利益を上げるための方法の一つとして挙げられる。
+Predicting the market prices and grasping market trends is one of the ways to make a profit.
+% 市場からどの製品の価格が高騰していてどの製品の価格が低落しているかを掴めれば、それらに対して対策を施すことで、自分に有利に契約を取り付けれる。
+If we can figure out which product price is rising and which one is falling from the market, we can get the contracts in our favor by taking measures against them.
+
+% 概要を図示!
+
+% Ashgentは締結した契約に対し，以下のようなアルゴリズムでそのステップにおける市場価格を予測する．
+Ashgent predicts the spot market price at that step for the contracts concluded using algorithm 1.
+
+\begin{algorithm}                      
+    \caption{Spot Market Price Prediction}         
+    \label{alg1}                          
+    \begin{algorithmic}                  
+        \REQUIRE $step \geq 2$
+        \FOR {$(p, q)$ in $Contracts$}
+        \STATE $predict \Leftarrow P_{step}$
+        \FOR {$i = 0$ to $q$}
+        \STATE $predict \Leftarrow ((1 - contract\_weight) * predict + contract\_weight * p)$
+        \ENDFOR
+        \STATE $predict = (breach\_level * P_{step} + (1 - breach\_level) * predict)$
+        \STATE $P_{step} = \frac{(P_{step-2} + P_{step-1} + predict)}{3}$
+        \ENDFOR
+    \end{algorithmic}
+\end{algorithm}
+% このアルゴリズムでは，締結したすべての契約Contractにおいて合意した価格pと合意した個数qを用いて，その時点でのステップStepの市場価格予測値Predictを導出する．
+In this algorithm, we derive the spot market price prediction $P_{step}$ of the step at that point $step$ from the agreed on price　$p$ and agreed on quantity $q$ in all contracts $Contracts$.
+% pをpredに反映する際の重みは，経験的な結果から0.5に設定した．
+The weight $contract\_weight$ of $p$ in the $predict$ was set to 0.5 based on experimental results.
+% また、２ステップ前までの、最終的な予測価格も反映する。
+It also reflects the final predicted prices up to two steps ago, $P_{step-2}$ and $P_{step-1}$.
+% これにより、市場価格の時系列的な傾向を考慮しつつ、交渉による市場価格の変動を反映できる.
+This allows us to reflect changes in the spot market price due to negotiations while taking into account time-series trends in market price.
+
+
+\section{Experiments}
+% Ashgentの性能を評価するために，SCMLのライブラリで実装されているanac2020_stdメソッドを用いてトーナメントを実行し，引数を以下のように与えた．
+To evaluate Ashgent's performance, we run tournaments using the anac2020\_std method, and give the following arguments:
+\begin{description}
+    \item[verbose] True
+    \item[n\_steps] 50
+    \item[n\_configs] 2
+    \item[n\_runs\_per\_world] 1 
+\end{description}
+% そして競争相手として比較的賢いビルトインエージェントであるDecentralizingAgentとIndDecentralizingAgentとMovingRangeAgentを採用した．
+As competitors, we adopted the relatively intelligent built-in agents DecentralizingAgent, IndDecentralizingAgent, and MovingRangeAgent.
+% 設定した条件の元でのトーナメントを５回行い，その結果を表１に示す．
+Five rounds of the tournament were held under the set conditions, and the results are shown in Table 1. % \ref{table:experiments}.
+% この表はAshgentが５つすべてのトーナメントで，他のエージェントよりも優れた性能を発揮していることを示す．
+This table shows that Ashgent outperforms the other agents in all five tournaments.
+
+
+% その中でも，トーナメント３のようにワールド全体が不景気なときでも，Ashgentはスコアの損失が最も抑えられていることが分かる．
+Among them, it can be seen that even when the entire world is in a recession such as Tournament 3, the score loss is most suppressed in Ashgent.
+% これにより，契約違反が頻発している環境下においても，Ashgentはそれに対するリスクマネジメントをしっかりと行うことができていることが示されている．
+This shows that Ashgent can manage risks well even in an environment of frequent contract breaches.
+% また，Ashgentの元となったDecentralizingAgentはトーナメント３でMovingRangeAgentに負け，トーナメント4ではIndDecentralizingAgentにも負けているが，Ashgentは安定して優れたスコアを出している．
+The DecentralizingAgent, which is the origin of Ashgent, lost to MovingRangeAgent in Tournament 3 and IndDecentralizingAgent in Tournament 4, but Ashgent showed stable and superior scores.
+% すなわち市場価格の予測による取引の調整が，他のエージェントよりも秀でたスコアを出すことに繋がったと考えられる．
+Hence, it is considered that the adjustment of trades by predicting spot market prices led to superior results over other agents.
+
+\begin{table}[h]
+    \caption{Score of Tournaments}
+    \label{table:experiments}
+    \centering
+     \scalebox{0.8}{
+     \begin{tabular}{c|cccc}
+      \hline
+      Tournament & \bf Ashgent & DecentralizingAgent & IndDecentralizingAgent &  MovingRangeAgent\\
+      \hline \hline
+      1 & \bf 0.12436 & 0.10937 & -0.54771 & -0.12771 \\
+      2 & \bf 0.02715 & -0.09767 & -0.25650 & -0.10419 \\
+      3 & \bf -0.05021 & -0.24999 & -0.31159 & -0.08295 \\
+      4 & \bf 0.06417 & -0.18742 & -0.18327 & -0.09477 \\
+      5 & \bf 0.08498 & -0.17369 & -0.35428 & -0.11134 \\
+      \hline
+      Average & \bf 0.05009 & -0.11988 & -0.33067 & -0.10419 \\
+      \hline
+     \end{tabular}
+     }
+\end{table}
+
+% \section{Lessons and Suggestions}
+\section*{Conclusions}
+% Ashgentではリスクマネジメントの基礎となる実装と，市場価格の予測による利益の向上を行った。
+Ashgent implements the fundamentals of risk management and improves profits by predicting the spot market prices.
+% これはExperimentsで示したように安定して優れた性能を発揮した。
+We showed a stable and excellent performance as shown in Experiments.
+% Ashgentは，リスクマネジメントを施すことで，不景気なワールドにおいても損失を抑え，そうでないワールドにおいても，市場価格の予測により安定して利益を生み出す．
+By applying risk management, Ashgent suppresses losses even in a recessed world.
+And even in a world that is not recessed, stable profit is generated by predicting the spot market prices.
+
+% (生産コストが修正されてから、比較的高スコアが取りづらくなった。つまり、このレポートで提案したアプローチ(必要量の調整と交渉価格の調整)自体は生産的だが、より高スコアを取るにはステップ終盤で在庫量の調整とかが求められると考えられる。)
+
+% 今回は経験的に良かったパラメータを使用したが(breach level等倍、過去データの比重)
+% パラメータとかまだ最適化できそうなのが課題
+
+% しかし，市場価格の予測について、他のエージェント間で署名された契約は反映できないので精度は保証されていない。
+However, The accuracy of the spot market price predictions is not guaranteed because it cannot reflect contracts signed between other agents.
+% それゆえ、自分が本当の市場価格から外れた予測をする可能性が考えられる。
+Therefore, we may make predictions that deviate from the true spot market prices.
+% 今後は，拒否された契約をも予測に反映することで，精度の向上をはかりたい．
+In the future, we would like to improve the accuracy by reflecting rejected contracts in the predictions.
+% 得られる情報を予測に丁寧に反映し，予測を用いた戦略での挙動を突き詰めれば、更なる優れたエージェントを作ることができると考えられる．
+By carefully reflecting the information obtained in the predictions and adjust the behavior in the strategy using the predictions, it is possible to create even better agents.
+\end{document}

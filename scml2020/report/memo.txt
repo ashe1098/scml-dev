@@ -1,0 +1,107 @@
+N. scores = 72  N. Worlds = 24
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        |  0.0647407 |
+|  1 | scml.scml2020.agents.decentralizing.DecentralizingAgent    | -0.0509361 |
+|  2 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.107487  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.192932  |
++----+------------------------------------------------------------+------------+
+
+N. scores = 48  N. Worlds = 24
++----+------------------------------------------------------------+-------------+
+|    | agent_type                                                 |       score |
+|----+------------------------------------------------------------+-------------|
+|  0 | __mp_main__.Ashgent                                        |  0.0887578  |
+|  1 | scml.scml2020.agents.decentralizing.DecentralizingAgent    |  0.00863699 |
+|  2 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.0928267  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.283307   |
++----+------------------------------------------------------------+-------------+
+
+N. scores = 48  N. Worlds = 24
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        | -0.0186224 |
+|  1 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.0831027 |
+|  2 | scml.scml2020.agents.decentralizing.DecentralizingAgent    | -0.101218  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.947277  |
++----+------------------------------------------------------------+------------+
+
+N. scores = 72  N. Worlds = 24
++----+------------------------------------------------------------+-------------+
+|    | agent_type                                                 |       score |
+|----+------------------------------------------------------------+-------------|
+|  0 | __mp_main__.Ashgent                                        |  0.0545681  |
+|  1 | scml.scml2020.agents.decentralizing.DecentralizingAgent    |  0.00175632 |
+|  2 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.0867701  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.206959   |
++----+------------------------------------------------------------+-------------+
+
+N. scores = 32  N. Worlds = 8
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        |  0.146922  |
+|  1 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent |  0.0547408 |
+|  2 | scml.scml2020.agents.decentralizing.DecentralizingAgent    |  0.0253449 |
+|  3 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.126034  |
++----+------------------------------------------------------------+------------+
+
+if step >= 3:
+                    predict = self.output_price[step - 1]
+                    for i in range(q):
+                        predict = ((1 - contract_weight) * predict + contract_weight * p)
+                    predict = round((penalty * self.output_price[step - 1] + (1 - penalty) * predict))  # 整数のみだから四捨五入
+                    self.output_price[step] = round((self.output_price[step - 3] + self.output_price[step - 2] + predict) / 3)  # 3step前まで反映
+
+
+N. scores = 32  N. Worlds = 8
++----+------------------------------------------------------------+-----------+
+|    | agent_type                                                 |     score |
+|----+------------------------------------------------------------+-----------|
+|  0 | __mp_main__.Ashgent                                        |  0.124359 |
+|  1 | scml.scml2020.agents.decentralizing.DecentralizingAgent    |  0.109372 |
+|  2 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.127708 |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.547706 |
++----+------------------------------------------------------------+-----------+
+            
+N. scores = 72  N. Worlds = 24
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        |  0.0271464 |
+|  1 | scml.scml2020.agents.decentralizing.DecentralizingAgent    | -0.0976667 |
+|  2 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.104191  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.256504  |
++----+------------------------------------------------------------+------------+
+
+N. scores = 48  N. Worlds = 24
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        | -0.0502078 |
+|  1 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.0829456 |
+|  2 | scml.scml2020.agents.decentralizing.DecentralizingAgent    | -0.249988  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.311591  |
++----+------------------------------------------------------------+------------+
+
+N. scores = 48  N. Worlds = 24
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        |  0.0641665 |
+|  1 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.0947661 |
+|  2 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.183272  |
+|  3 | scml.scml2020.agents.decentralizing.DecentralizingAgent    | -0.18742   |
++----+------------------------------------------------------------+------------+
+
+N. scores = 32  N. Worlds = 8
++----+------------------------------------------------------------+------------+
+|    | agent_type                                                 |      score |
+|----+------------------------------------------------------------+------------|
+|  0 | __mp_main__.Ashgent                                        |  0.0849823 |
+|  1 | scml.scml2020.agents.moving.MovingRangeAgent               | -0.111336  |
+|  2 | scml.scml2020.agents.decentralizing.DecentralizingAgent    | -0.173686  |
+|  3 | scml.scml2020.agents.decentralizing.IndDecentralizingAgent | -0.354276  |
++----+------------------------------------------------------------+------------+

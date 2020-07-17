@@ -71,79 +71,79 @@ import math
 
 # my module
 from components.production import MyProductor  # 提出時は.components.productionにする
-from components.negotiation import MyNegotiationManager, LegacyNegotiationManager
+from components.negotiation import NewNegotiationManager, MyNegotiationManager
 from components.trading import MyTrader
 
-# class NewAshgent(  # 性能出なかったので没
-#     MyProductor,
-#     MyNegotiationManager,
-#     MyTrader,
-#     SCML2020Agent
-# ):
-#     """
-#     This is the only class you *need* to implement. You can create the agent
-#     by combining the following strategies:
+class NewAshgent(  # 性能出なかったので没
+    MyProductor,
+    NewNegotiationManager,
+    MyTrader,
+    SCML2020Agent
+):
+    """
+    This is the only class you *need* to implement. You can create the agent
+    by combining the following strategies:
     
-#     1. A trading strategy that decides the quantities to sell and buy
-#     2. A negotiation manager that decides which negotiations to engage in and 
-#        uses some controller(s) to control the behavior of all negotiators
-#     3. A production strategy that decides what to produce
+    1. A trading strategy that decides the quantities to sell and buy
+    2. A negotiation manager that decides which negotiations to engage in and 
+       uses some controller(s) to control the behavior of all negotiators
+    3. A production strategy that decides what to produce
 
-#     """
+    """
 
-#     def step(self):
-#         super().step()
-#         # print(self.awi.reports_of_agent(self.id))  # エージェントのIDからFinancialReportを取得
-#         # if self.awi.current_step > 10:  # 0はダメ
-#         #     print(self.awi.reports_at_step(self.awi.current_step - 1))  # ステップ番号からFinancialReportを取得, 指定できるステップ以前に発行された最新のFinancialReportが取得できると思われる, current_step以前のステップを指定
-#         #     # print(self.awi.reports_at_step(4))  # Noneが返ってくる謎(古いステップのFinantialReportは5ステップずつしか残ってない？)
+    def step(self):
+        super().step()
+        # print(self.awi.reports_of_agent(self.id))  # エージェントのIDからFinancialReportを取得
+        # if self.awi.current_step > 10:  # 0はダメ
+        #     print(self.awi.reports_at_step(self.awi.current_step - 1))  # ステップ番号からFinancialReportを取得, 指定できるステップ以前に発行された最新のFinancialReportが取得できると思われる, current_step以前のステップを指定
+        #     # print(self.awi.reports_at_step(4))  # Noneが返ってくる謎(古いステップのFinantialReportは5ステップずつしか残ってない？)
 
-#     def target_quantity(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
-#         # """A fixed target quantity of half my production capacity"""
-#         # return self.awi.n_lines // 2
+    def target_quantity(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
+        # """A fixed target quantity of half my production capacity"""
+        # return self.awi.n_lines // 2
 
-#         ## 改良 ##
-#         return self.awi.n_lines
+        ## 改良 ##
+        return self.awi.n_lines
 
-#         # ## 元 ##
-#         # if sell:
-#         #     needed, secured = self.outputs_needed, self.outputs_secured
-#         # else:
-#         #     needed, secured = self.inputs_needed, self.inputs_secured
+        # ## 元 ##
+        # if sell:
+        #     needed, secured = self.outputs_needed, self.outputs_secured
+        # else:
+        #     needed, secured = self.inputs_needed, self.inputs_secured
 
-#         # return needed[step - 1] - secured[step - 1]  # stepが1から始まるから-1する必要あり．元のやつバグってるわ
+        # return needed[step - 1] - secured[step - 1]  # stepが1から始まるから-1する必要あり．元のやつバグってるわ
 
-#     def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:  # これがあればtarget_quantityは使わないっぽい
-#         """Implemented for speed but not really required"""
+    def target_quantities(self, steps: Tuple[int, int], sell: bool) -> np.ndarray:  # これがあればtarget_quantityは使わないっぽい
+        """Implemented for speed but not really required"""
 
-#         if sell:
-#             needed, secured = self.outputs_needed, self.outputs_secured
-#         else:
-#             needed, secured = self.inputs_needed, self.inputs_secured
+        if sell:
+            needed, secured = self.outputs_needed, self.outputs_secured
+        else:
+            needed, secured = self.inputs_needed, self.inputs_secured
 
-#         return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
+        return needed[steps[0]-1 : steps[1]-1] - secured[steps[0]-1 : steps[1]-1]
 
-#     def acceptable_unit_price(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
-#         # """The catalog price seems OK"""
-#         # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
+    def acceptable_unit_price(self, step: int, sell: bool) -> int:  # MovingRangeNegotiationManagerでは不要
+        # """The catalog price seems OK"""
+        # return self.awi.catalog_prices[self.awi.my_output_product] if sell else self.awi.catalog_prices[self.awi.my_input_product]
         
-#         ## 元 ##
-#         production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
-#         if sell:
-#             return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
-#         return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
+        ## 元 ##
+        production_cost = np.max(self.awi.profile.costs[:, self.awi.my_input_product])
+        if sell:
+            return production_cost + self.input_cost[step]  # そのステップにおける仕入れの予測値と，生産コストより良ければ売る（いくらで仕入れたかは考慮してない？）
+        return self.output_price[step] - production_cost  # そのステップにおける売却予測値から，生産コストを差し引いてそれより良ければ買う（現ステップでいくらで取引されてるかは考慮してない？）
 
-#     # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):  # IndependentNegotiationsManagerはContorollerを使わないため，ufun関数の定義がここで必要
-#     #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
-#     #     if is_seller:
-#     #         return LinearUtilityFunction((0, 0.25, 1))
-#     #     return LinearUtilityFunction((0, -0.5, -0.8))
+    # def create_ufun(self, is_seller: bool, issues=None, outcomes=None):  # IndependentNegotiationsManagerはContorollerを使わないため，ufun関数の定義がここで必要
+    #     """A utility function that penalizes high cost and late delivery for buying and and awards them for selling"""
+    #     if is_seller:
+    #         return LinearUtilityFunction((0, 0.25, 1))
+    #     return LinearUtilityFunction((0, -0.5, -0.8))
 
 
 
 class Ashgent(
     MyProductor,
-    LegacyNegotiationManager,
+    MyNegotiationManager,
     MyTrader,
     SCML2020Agent
 ):
@@ -295,7 +295,7 @@ def run(competition='std',
 
     """
     # competitors = [NewAshgent, Ashgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
-    competitors = [Ashgent, DecentralizingAgent, BuyCheapSellExpensiveAgent]
+    competitors = [Ashgent, DecentralizingAgent, IndDecentralizingAgent, MovingRangeAgent]
     start = time.perf_counter()
     if competition == 'std':
         results = anac2020_std(

@@ -36,7 +36,7 @@ import seaborn as sns
 from .prediction import MyERPredictor
 
 
-class MyNegotiationManager(MyERPredictor):
+class NewNegotiationManager(MyERPredictor):
     """
     NegotiationManager
     StepNegotiationManager  # StepController
@@ -166,7 +166,7 @@ class ControllerInfo:
     expected: int
     done: bool = False
 
-class LegacyNegotiationManager(MyERPredictor, NegotiationManager):
+class MyNegotiationManager(MyERPredictor, NegotiationManager):
     """
     NegotiationManager
     *StepNegotiationManager
